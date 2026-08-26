@@ -121,6 +121,18 @@
       "ret": "null",
       "payable": false
     },
+    "claim_uncontested_expiry": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
     "configure_evidence_policy": {
       "params": [
         [

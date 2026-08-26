@@ -594,7 +594,7 @@ class MeaningLock(gl.Contract):
         if self.paid[covenant_id]: self.state[covenant_id]=CLOSED
         self.note[covenant_id]=note
         self._audit(covenant_id,"TRANSFER_EMITTED",recipient,note)
-        _Recipient(recipient).emit_transfer(value=amount,on="finalized")
+        _Recipient(recipient).emit_transfer(value=amount)
 
     @gl.public.view
     def get_status(self,covenant_id:u256)->tuple[u256,u256,u256,u256,u256]:
