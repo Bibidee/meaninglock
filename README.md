@@ -13,13 +13,13 @@ The implementation separates registration and frozen terms, multimodal evidence 
 `ACTIVE → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
 Uncontested expiry is claimable by the publisher. Preserved reviews do not terminate monitoring. Appeals replace the canonical evidence context and keep adverse settlement locked until the appeal deadline.
 
-Payout uses one helper, `_send_gen`, which zeroes its ledger and marks the covenant paid before emitting its single finalized GEN transfer.
+Payout uses one `_send_gen` helper for checks-effects-interactions. It debits an explicit source bucket, records each partial transfer in the audit log, and closes only when all outstanding escrow reaches zero. No transfer mode is assumed beyond the current GenLayer payable-message API.
 
 ## Layout
 
 - `contracts/meaning_lock.py` is the only deployable source.
 - `tests/direct/` and `tests/integration/` are outside `contracts/` so lint/schema extraction cannot mistake them for contracts.
-- `scripts/release_check.ps1` verifies source isolation and the single-transfer invariant.
+- `scripts/release_check.ps1` verifies source isolation and the single transfer-emission helper invariant.
 
 ## Verify
 
