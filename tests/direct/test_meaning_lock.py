@@ -21,6 +21,30 @@ def test_core_invariants_are_present():
     assert source.count('emit_transfer') == 1
     assert 'gl.vm.run_nondet_unsafe' in source
 
+def test_lifecycle_and_round_guards_are_present():
+    source = Path('contracts/meaning_lock.py').read_text(encoding='utf-8')
+    assert 'def claim_uncontested_expiry' in source
+    assert 'policy frozen after first challenge' in source
+    assert 'review round expired; covenant remains monitorable' in source
+    assert 'challenge bond returned' in source
+
+def test_hardened_external_inputs_are_present():
+    source = Path('contracts/meaning_lock.py').read_text(encoding='utf-8')
+    for marker in ('MAX_URL_CHARS', 'MAX_EVIDENCE_REFERENCES', 'HTTPS URL required', 'HTTPS image URL required', 'digest must be 64 hex characters'):
+        assert marker in source
+
+def test_collision_safe_namespaces_and_explicit_debit_source():
+    source = Path('contracts/meaning_lock.py').read_text(encoding='utf-8')
+    assert '_evidence_key_for' in source and '_audit_key_for' in source
+    assert 'source:u256=u256(1)' in source
+    assert 'source == u256(2)' in source
+
+def test_appeal_window_is_enforced():
+    source = Path('contracts/meaning_lock.py').read_text(encoding='utf-8')
+    assert 'appeal window closed' in source
+    assert 'appeal window still open' in source
+    assert 'self.appeal_deadline[covenant_id]=self._now()+self.challenge_window' in source
+
 @pytest.mark.skipif(not _HAS_GENLAYER_IMPORT, reason='GenLayer SDK module is injected by Direct Mode, not exposed to plain pytest imports')
 def test_canonical_categories_are_closed_and_deterministic():
     contract_type, module = _contract_type()
