@@ -285,6 +285,7 @@ class MeaningLock(gl.Contract):
         """Set conservative classification thresholds before a challenge exists."""
         self._active(covenant_id)
         self._publisher(covenant_id)
+        if self.round[covenant_id] != u256(0): raise gl.vm.UserError("settlement policy frozen after first challenge")
         if minimum_confidence > HIGH:
             raise gl.vm.UserError("invalid confidence threshold")
         if permitted_impact > CRITICAL:
@@ -306,6 +307,7 @@ class MeaningLock(gl.Contract):
         """Configure deterministic basis-point allocation for adverse settlement."""
         self._active(covenant_id)
         self._publisher(covenant_id)
+        if self.round[covenant_id] != u256(0): raise gl.vm.UserError("settlement policy frozen after first challenge")
         if publisher_bps + beneficiary_bps + challenger_bps != u256(10000):
             raise gl.vm.UserError("settlement split must equal 10000 bps")
         self.settlement_publisher_bps[covenant_id] = publisher_bps
@@ -327,6 +329,9 @@ class MeaningLock(gl.Contract):
         self._text(kind, "evidence kind")
         self._text(url, "evidence url")
         self._text(digest, "evidence digest")
+        self._assert_live_url(url)
+        self._assert_digest(digest.lower())
+        if not self._state_allows_evidence(covenant_id): raise gl.vm.UserError("evidence phase closed")
         if gl.message.sender_address != self.publisher[covenant_id] and gl.message.sender_address != self.beneficiary[covenant_id] and gl.message.sender_address != self.challenger[covenant_id]:
             raise gl.vm.UserError("covenant party only")
         n = self.evidence_count[covenant_id] + u256(1)
@@ -335,7 +340,7 @@ class MeaningLock(gl.Contract):
         key = self._evidence_key_for(n, covenant_id)
         self.evidence_kind[key] = kind
         self.evidence_url[key] = url
-        self.evidence_digest[key] = digest
+        self.evidence_digest[key] = digest.lower()
         self.evidence_submitted_at[key] = self._now()
         self._audit(covenant_id, "EVIDENCE_REFERENCED", gl.message.sender_address, kind)
         return n
@@ -354,8 +359,8 @@ class MeaningLock(gl.Contract):
         self._text(reason, "appeal reason")
         if self.state[covenant_id] != RESOLVED or not self._outcome_is_adverse(self.verdict[covenant_id]):
             raise gl.vm.UserError("adverse resolved covenant required")
-        if self.appeal_deadline[covenant_id] != u256(0) and self._deadline_is_open(self.appeal_deadline[covenant_id]):
-            raise gl.vm.UserError("appeal window still open")
+        if self.appeal_deadline[covenant_id] == u256(0) or not self._deadline_is_open(self.appeal_deadline[covenant_id]):
+            raise gl.vm.UserError("appeal window closed")
         if self.paid[covenant_id]:
             raise gl.vm.UserError("settlement already paid")
         if self.appeal_count[covenant_id] >= u256(2):
@@ -453,10 +458,19 @@ class MeaningLock(gl.Contract):
         self.topic_mask[covenant_id]=record["mask"]
         self.checked_at[covenant_id]=self._now()
         if final==PRESERVED:
+            if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
+            self.challenger[covenant_id]=Address("0x0000000000000000000000000000000000000000")
+            self.challenger_bond[covenant_id]=u256(0)
+            self.reason[covenant_id]=""
+            self.challenge_url[covenant_id]=""
+            self.challenge_image_url[covenant_id]=""
+            self.challenged_at[covenant_id]=u256(0)
+            self.challenge_deadline[covenant_id]=u256(0)
             self.state[covenant_id]=ACTIVE
             self.appeal_deadline[covenant_id]=u256(0)
         else:
             self.state[covenant_id]=RESOLVED
+            self.appeal_deadline[covenant_id]=self._now()+self.challenge_window
         if final==UNVERIFIABLE:
             self.recovery_deadline[covenant_id]=self._now()+self.recovery_window
             self.note[covenant_id]="unverifiable; recovery window"
@@ -499,7 +513,7 @@ class MeaningLock(gl.Contract):
         if self.visual_required[covenant_id] and self.baseline_image_url[covenant_id] == "":
             return UNVERIFIABLE
         if not self.fallback_allowed[covenant_id] and record["outcome"] == UNVERIFIABLE:
-            return UNVERIFIABLE
+            raise gl.vm.UserError("fallback disabled for unverifiable evidence")
         return self._derive(record)
 
     def _verdict_name(self, verdict: u256) -> str:
@@ -529,7 +543,7 @@ class MeaningLock(gl.Contract):
         if publisher_share > u256(0): self._send_gen(covenant_id,self.publisher[covenant_id],publisher_share,"adverse publisher share")
         if beneficiary_share > u256(0): self._send_gen(covenant_id,self.beneficiary[covenant_id],beneficiary_share,"adverse beneficiary settlement")
         if challenger_share > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],challenger_share,"adverse challenger share")
-        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
 
     @gl.public.write
     def claim_uncontested_expiry(self,covenant_id:u256)->None:
@@ -547,7 +561,7 @@ class MeaningLock(gl.Contract):
         self.verdict[covenant_id]=EXPIRED
         self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"publisher claimed preserved expiry")
         self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"preserved expiry")
-        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
 
     @gl.public.write
     def recover_unverifiable(self,covenant_id:u256)->None:
@@ -556,7 +570,7 @@ class MeaningLock(gl.Contract):
         if gl.message.sender_address!=self.publisher[covenant_id] and gl.message.sender_address!=self.beneficiary[covenant_id] and gl.message.sender_address!=self.challenger[covenant_id]: raise gl.vm.UserError("party only")
         self._audit(covenant_id,"RECOVERY_REQUESTED",gl.message.sender_address,"unverifiable recovery")
         self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"unverifiable recovery")
-        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
 
     @gl.public.write
     def recover_timed_out_challenge(self,covenant_id:u256)->None:
@@ -564,30 +578,40 @@ class MeaningLock(gl.Contract):
         self._publisher(covenant_id)
         if self.state[covenant_id]!=PENDING or self._now()<=self.challenge_deadline[covenant_id]: raise gl.vm.UserError("timed out pending challenge required")
         self.verdict[covenant_id]=UNVERIFIABLE
-        self.state[covenant_id]=ACTIVE
+        if self._expiry_is_open(covenant_id): self.state[covenant_id]=ACTIVE
+        else:
+            self.verdict[covenant_id]=EXPIRED
+            self.state[covenant_id]=CLOSED
+            self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"expired after timeout")
         self._audit(covenant_id,"TIMEOUT_RECOVERY",gl.message.sender_address,"review round expired; covenant remains monitorable")
-        self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"challenge timeout")
-        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
+        self.challenger[covenant_id]=Address("0x0000000000000000000000000000000000000000")
+        self.challenger_bond[covenant_id]=u256(0)
+        self.reason[covenant_id]=""
+        self.challenge_url[covenant_id]=""
+        self.challenge_image_url[covenant_id]=""
+        self.challenged_at[covenant_id]=u256(0)
+        self.challenge_deadline[covenant_id]=u256(0)
 
     @gl.public.write
     def cancel_before_challenge(self,covenant_id:u256,reason:str)->None:
         self._active(covenant_id)
         self._publisher(covenant_id)
+        if self.round[covenant_id] != u256(0) or self.challenger_bond[covenant_id] != u256(0): raise gl.vm.UserError("cancellation unavailable after participation")
         self._text(reason,"reason")
         self.verdict[covenant_id]=CANCELLED
         self.state[covenant_id]=CLOSED
         self._audit(covenant_id,"CANCELLED",gl.message.sender_address,reason)
         self._send_gen(covenant_id,self.publisher[covenant_id],self.escrow[covenant_id],"cancelled: "+reason)
 
-    def _send_gen(self,covenant_id:u256,recipient:Address,amount:u256,note:str)->None:
+    def _send_gen(self,covenant_id:u256,recipient:Address,amount:u256,note:str,source:u256=u256(1))->None:
         """The only transfer emission: zero ledger and mark paid before emit."""
         if self.paid[covenant_id]: raise gl.vm.UserError("already paid")
         if amount==u256(0) or amount>self.escrow[covenant_id]: raise gl.vm.UserError("invalid payout")
         self.escrow[covenant_id]=self.escrow[covenant_id]-amount
-        if recipient == self.publisher[covenant_id]: self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
-        elif recipient == self.challenger[covenant_id]: self.challenger_bond[covenant_id]=self.challenger_bond[covenant_id]-amount
-        elif recipient == self.beneficiary[covenant_id]: self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
-        else: raise gl.vm.UserError("invalid payout recipient")
+        if source == u256(1): self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
+        elif source == u256(2): self.challenger_bond[covenant_id]=self.challenger_bond[covenant_id]-amount
+        else: raise gl.vm.UserError("invalid payout source")
         self.paid[covenant_id]=self.escrow[covenant_id]==u256(0)
         self.paid_to[covenant_id]=recipient
         self.paid_amount[covenant_id]=self.paid_amount[covenant_id]+amount
@@ -883,6 +907,7 @@ class MeaningLock(gl.Contract):
     def _assert_image_optional(self, value: str) -> None:
         if value != "":
             self._text(value, "image url")
+            if not value.startswith("https://") or "://" not in value or "@" in value: raise gl.vm.UserError("HTTPS image URL required")
 
     def _assert_digest(self, value: str) -> None:
         self._text(value, "digest")

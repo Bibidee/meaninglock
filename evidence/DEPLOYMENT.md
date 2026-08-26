@@ -101,3 +101,13 @@ confirming the ledger was zeroed and marked paid before the transfer emission.
 The first transaction (`0x46ca7de7451de1d4b71395788a05eecf2101ee2d4b97fa57b5ba475cc8a6f3c2`, address `0xD27e2436980E78E21180E82c706e33A075FEe68C`) reached majority agreement but its constructor failed on every execution path because untyped `TreeMap()` values were assigned to typed storage descriptors. It must not be used. The corrected source uses `gl.storage.inmem_allocate(TreeMap[K, V])` for every persisted map and was deployed at the address above.
 
 The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94874646E3fB1F63087222a228e9DbE9D52c7432`, and `0x83a93a6db193da82AC7f6B2e6B93b24A5BA2A2a4` are superseded and must not be used.
+
+## Final closure deployment
+
+- Contract address: `0xAc49136B2d1243b3a06DF17F061CE11241aAC8eC`
+- Deployment transaction: `0x4ce8d3efa46dfe78fdaee694946e45832949c94bdd695c2296201b2628945be9`
+- Source SHA-256: `83DD0162674EEB8E7136046C2B5975357B0DD13E8C8D79AACD96399FF0EE2270`
+- Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
+- Protocol read: `[false, '1000000000000000000', 86400, 86400]`
+- Schema extraction: successful (40 methods, 21 views, 19 writes)
+- Explorer source parity: confirmed after normalizing transport line endings.
