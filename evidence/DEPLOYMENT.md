@@ -1,6 +1,6 @@
 # MeaningLock Studio deployment record
 
-## Canonical corrected deployment
+## Historical deployment (superseded by current source changes)
 
 - Network: GenLayer Studio Network
 - Deployer account: `faultline-dev`
@@ -10,6 +10,11 @@
 - Consensus result: `MAJORITY_AGREE`
 - Transaction status: `ACCEPTED`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
+
+The source has since changed to add uncontested-expiry settlement, round-preserving
+monitoring, challenge-bond minimums, component-safe payouts, bounded inputs, and
+collision-safe evidence keys. Therefore this address is historical evidence only;
+a fresh deployment is required before submission.
 
 ## Live verification
 
