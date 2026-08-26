@@ -540,7 +540,8 @@ class MeaningLock(gl.Contract):
         if self.verdict[covenant_id]!=PRESERVED or self._now()<self.expires_at[covenant_id]: raise gl.vm.UserError("preserved expiry required")
         self.verdict[covenant_id]=EXPIRED
         self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"publisher claimed preserved expiry")
-        self._send_gen(covenant_id,self.publisher[covenant_id],self.escrow[covenant_id],"preserved expiry")
+        self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"preserved expiry")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
 
     @gl.public.write
     def recover_unverifiable(self,covenant_id:u256)->None:
@@ -548,7 +549,8 @@ class MeaningLock(gl.Contract):
         if self.verdict[covenant_id]!=UNVERIFIABLE or self._now()<self.recovery_deadline[covenant_id]: raise gl.vm.UserError("unverifiable recovery unavailable")
         if gl.message.sender_address!=self.publisher[covenant_id] and gl.message.sender_address!=self.beneficiary[covenant_id] and gl.message.sender_address!=self.challenger[covenant_id]: raise gl.vm.UserError("party only")
         self._audit(covenant_id,"RECOVERY_REQUESTED",gl.message.sender_address,"unverifiable recovery")
-        self._send_gen(covenant_id,self.publisher[covenant_id],self.escrow[covenant_id],"unverifiable recovery")
+        self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"unverifiable recovery")
+        if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
 
     @gl.public.write
     def recover_timed_out_challenge(self,covenant_id:u256)->None:
@@ -576,8 +578,10 @@ class MeaningLock(gl.Contract):
         if self.paid[covenant_id]: raise gl.vm.UserError("already paid")
         if amount==u256(0) or amount>self.escrow[covenant_id]: raise gl.vm.UserError("invalid payout")
         self.escrow[covenant_id]=self.escrow[covenant_id]-amount
-        if amount<=self.publisher_bond[covenant_id]: self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
-        elif amount<=self.challenger_bond[covenant_id]: self.challenger_bond[covenant_id]=self.challenger_bond[covenant_id]-amount
+        if recipient == self.publisher[covenant_id]: self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
+        elif recipient == self.challenger[covenant_id]: self.challenger_bond[covenant_id]=self.challenger_bond[covenant_id]-amount
+        elif recipient == self.beneficiary[covenant_id]: self.publisher_bond[covenant_id]=self.publisher_bond[covenant_id]-amount
+        else: raise gl.vm.UserError("invalid payout recipient")
         self.paid[covenant_id]=self.escrow[covenant_id]==u256(0)
         self.paid_to[covenant_id]=recipient
         self.paid_amount[covenant_id]=self.paid_amount[covenant_id]+amount
