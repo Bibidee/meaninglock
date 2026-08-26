@@ -16,6 +16,17 @@ monitoring, challenge-bond minimums, component-safe payouts, bounded inputs, and
 collision-safe evidence keys. Therefore this address is historical evidence only;
 a fresh deployment is required before submission.
 
+## Fresh deployment for closure source
+
+- Network: GenLayer Studio Network
+- Contract address: `0x05d6b9821473C103A183652F46fA34EdD69999dD`
+- Deployment transaction: `0x38a2c151e867d11d85925d2ed90c6bf31710fd6ec20dfcb2911363be57db1d39`
+- Source commit: `5e44e028c7228aaff65259f9d11a526a6bf18fdc`
+- Local source SHA-256: `428742DD1A3CDA6D61955ADE2E0EB7FEF4E7BDAB672C70B5804B3E418A25FD35`
+- Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
+- Protocol read: `[false, '1000000000000000000', 86400, 86400]`
+- Explorer source parity: confirmed equal after transport line-ending normalization; schema retrieved successfully.
+
 ## Live verification
 
 The read-only `get_protocol_config` call returned:
