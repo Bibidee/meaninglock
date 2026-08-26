@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File scripts/release_check.ps1
 
 No deploy command is included. Publish the exact same source to Explorer after the full release checklist passes. A fresh deployment is required whenever `contracts/meaning_lock.py` changes; historical deployment addresses are evidence only.
 
-The corrected Studio deployment record is in `evidence/DEPLOYMENT.md`. The first
-deployment attempt is explicitly superseded because its constructor exposed a
-runtime storage-allocation defect; only the corrected address in that record is
-usable.
+The Studio deployment history and current closure deployment are in
+`evidence/DEPLOYMENT.md`. Historical addresses are explicitly superseded; use
+only the fresh address recorded in the closure section after independently
+checking Explorer source parity.
