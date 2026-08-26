@@ -27,17 +27,18 @@ a fresh deployment is required before submission.
 - Protocol read: `[false, '1000000000000000000', 86400, 86400]`
 - Explorer source parity: confirmed equal after transport line-ending normalization; schema retrieved successfully.
 
-## Final settlement-accounting deployment
+## Final warning-free deployment
 
 The settlement split was subsequently corrected so configured basis points are
 actually applied to adverse principal with deterministic remainder allocation.
 This is the current canonical deployment:
 
-- Contract address: `0xc5011344E35CA8865D38f5a334cb76876B9B0B62`
-- Deployment transaction: `0x7980fbac720eb8de0c9d8bc95d1008b81fb3d3b18275ea40ad90ef970430d722`
-- Source SHA-256: `24D20F613F577E9A2DAAFE132983B4AAAC9884778068B511B3813BDDC5065607`
+- Contract address: `0x0eF33abd47Acf477Ec45fD317A8091516CF4CA54`
+- Deployment transaction: `0x287df0ae6d2855a594610fad6d8f50a34dcde2fa4beb48b2559e81281eaf966e`
+- Source commit: `4f88132`
+- Source SHA-256: `C73FDF8F220AFD2E0EB4CA2DFC5EB17838BB2DDF1389E38397D09A80CA1303FF`
 - Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
-- Schema/source parity must be rechecked against this address before submission.
+- Schema extraction and source parity should be checked against this address before submission.
 
 ## Live verification
 
