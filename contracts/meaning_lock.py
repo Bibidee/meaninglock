@@ -241,8 +241,8 @@ class MeaningLock(gl.Contract):
         self.permitted_impact[i]=MATERIAL
         self.visual_required[i]=baseline_image_url!=""
         self.fallback_allowed[i]=True
-        self.settlement_publisher_bps[i]=u256(10000)
-        self.settlement_beneficiary_bps[i]=u256(0)
+        self.settlement_publisher_bps[i]=u256(0)
+        self.settlement_beneficiary_bps[i]=u256(10000)
         self.settlement_challenger_bps[i]=u256(0)
         self.evidence_count[i]=u256(0)
         self.appeal_count[i]=u256(0)
@@ -522,7 +522,13 @@ class MeaningLock(gl.Contract):
         if self.verdict[covenant_id]!=CHANGED and self.verdict[covenant_id]!=REMOVED: raise gl.vm.UserError("adverse verdict required")
         if self.appeal_deadline[covenant_id] != u256(0) and self._deadline_is_open(self.appeal_deadline[covenant_id]): raise gl.vm.UserError("appeal window still open")
         self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"beneficiary claimed adverse verdict")
-        self._send_gen(covenant_id,self.beneficiary[covenant_id],self.publisher_bond[covenant_id],"adverse settlement")
+        principal=self.publisher_bond[covenant_id]
+        publisher_share=self._basis_points_amount(principal,self.settlement_publisher_bps[covenant_id])
+        beneficiary_share=self._basis_points_amount(principal,self.settlement_beneficiary_bps[covenant_id])
+        challenger_share=principal-publisher_share-beneficiary_share
+        if publisher_share > u256(0): self._send_gen(covenant_id,self.publisher[covenant_id],publisher_share,"adverse publisher share")
+        if beneficiary_share > u256(0): self._send_gen(covenant_id,self.beneficiary[covenant_id],beneficiary_share,"adverse beneficiary settlement")
+        if challenger_share > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],challenger_share,"adverse challenger share")
         if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned")
 
     @gl.public.write
