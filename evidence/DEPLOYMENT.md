@@ -10,7 +10,7 @@ new source is deployed and Explorer parity is confirmed.
 - Network: GenLayer Studio Network
 - Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497` (superseded pending fresh deployment)
 - Deployment transaction: `0x2959d6c807c88e166def8bef85b725497a7979acc1cc7810be9c602fdc5b9f44`
-- Updated source commit: `3f5f63ebb434a543eedfa7b12fefdf871f3f70b9`
+- Updated source commit: `96487cb8620c82c3900f0ceb2daf89e5795b1781`
 - Updated contract SHA-256: `F64A3F4254AD867338E351E18939CDFCD3785AD481AC32576E473D23C22309A7`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
