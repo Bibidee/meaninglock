@@ -2,32 +2,32 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
-**Pending fresh deployment.** Source changed in the final hardening pass, so the
-previous canonical address is historical evidence only. A new deployment and
-Explorer parity check are required before submission.
+The deployment below is the current canonical address for the final hardening
+source. All five user-initiated transactions finalized successfully.
 
 - Network: GenLayer Studio Network
-- Address: `0xE1f8896417a424543A75B4fDa6cDdc553C31184E` (superseded)
-- Deployment transaction: `0x3a563e004e5e9fd5011de0d55d31067a5f2c9412b990f3ea5ee71777778dd277`
-- Updated source commit: `441abd130653efafe69262b1e917532afd4a6055`
-- Updated contract SHA-256: `909C15B5DFF5ECF66FC4936BD621B4AA7A61B3F22F42B969CED70F94C8FECC7C`
+- Address: `0x7ef7f667ceC8DB0d68b6E0c11263c97Af0238109`
+- Deployment transaction: `0xb2640d352c5a0369007e1e0fb26923236959a87fc418095dfb042cfc2a673bfb`
+- Updated source commit: `abcac704ce995a890461da548a8f8464bd58c3c7`
+- Updated contract SHA-256: `DA1C66BC66A3D3C2E57248B9B2502E2F29928EA4E2AF2F1A7EAC6CA68BBA1B36`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
-- Updated schema: 47 methods (26 view, 21 write)
+- Updated schema: 48 methods (26 view, 22 write)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
-- Explorer source parity: confirmed byte-equivalent after line-ending normalization.
+- Explorer source parity: confirmed; Explorer exposes the final source and 48-method ABI.
 
-## PRIOR PAYABLE LIFECYCLE PROOF (SUPERSEDED SOURCE)
+## FINAL PAYABLE LIFECYCLE PROOF
 
 - Covenant ID: `1`
 - Publisher: `0x3506660bF99b7517e941ae6CAEF16DCa2428d691`
 - Challenger: `0x607AD92a6B771745E6046bC0A5F4329e3a521309`
-- Registration transaction: `0x7f31fb647225ea0abce9879d460668b022d958dc8f693e2309c17b284b57f6c6` — `FINALIZED`, `SUCCESS`
-- Challenge transaction: `0x643fbee3bf08d168633401a0b450d1085a9ac4bdb274eb682da152469b6ab8ee` — `FINALIZED`, `SUCCESS`
-- Verification transaction: `0x103003b7cf60fa36b5a7d2865ae09ab5777b56415f92d593e193ee36b10f1309` — `FINALIZED`, `SUCCESS`
-- Verification consensus: `Accepted`; deterministic result `UNVERIFIABLE`
+- Registration transaction: `0xb6ce2a77cd97b86e63074c6e377dcea17afb9194b751c57cd90e9140e5e89e05` — `FINALIZED`, `SUCCESS`
+- Activation transaction: `0x595159ebdfc66376750839f2a64e920c82affd774ad10643715c748e5745a307` — `FINALIZED`, `SUCCESS`
+- Challenge transaction: `0xcab24631568136b10b7b1b7fd07bcd88429ec359828ad3b3fc8407bcd777537c` — `FINALIZED`, `SUCCESS`
+- Verification transaction: `0x19be2a691d10d7f2758c78e9505f7b584a540b4eece5a7dedcce3e198e282896` — `FINALIZED`, `SUCCESS`
+- Verification consensus: `Accepted`; deterministic result `UNVERIFIABLE` (baseline commitment mismatch safely prevented a trusted verdict)
 - Final read: `RESOLVED`, verdict `UNVERIFIABLE`, review type `ROUND_NONE`, escrow `2000000000000000000`
-- No user-initiated transaction on this address failed or reverted.
+- No failed user-initiated writes exist on this canonical address.
 
 ## FAILED REPLACEMENT ATTEMPTS (NOT CANONICAL)
 
@@ -60,10 +60,10 @@ All transactions below are on the canonical address above.
 ## VALIDATION AND TEST EVIDENCE
 
 - `genvm-lint check`: passed (3 checks)
-- `genvm-lint validate`: passed; 44 methods
+- `genvm-lint validate`: passed; 48 methods (26 view, 22 write)
 - `genvm-lint schema`: written successfully
 - `genvm-lint typecheck`: no type errors
-- Direct Mode: 26 passed, 2 skipped (including targeted semantic-verdict equivalence and malformed-record normalization)
+- Direct Mode: 32 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT activation)
 - Plain integration pytest: 1 skipped when no live `MEANINGLOCK_ADDRESS`/RPC environment is configured; canonical payable lifecycle evidence is recorded above.
 - Full release script: structural checks passed
 
