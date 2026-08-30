@@ -41,7 +41,8 @@ source. All five user-initiated transactions finalized successfully.
 
 ## HISTORICAL PAYABLE LIFECYCLE PROOF (SUPERSEDED ADDRESS)
 
-All transactions below are on the canonical address above.
+These transactions belong to the superseded pre-hardening deployment
+`0x689Af928b6E030a5b0881f0B141f74ADcA7f7497`.
 
 - Covenant ID: `1`
 - Publisher: `0x79b3Ecbe6a65beE93b2Fcda78e6909892671507F`
