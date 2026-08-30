@@ -227,6 +227,20 @@
         "string"
       ]
     },
+    "get_covenant_windows": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": [
+        "int",
+        "int"
+      ]
+    },
     "get_deadlines": {
       "params": [
         [
@@ -368,6 +382,22 @@
         "string"
       ]
     },
+    "get_payout_totals": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": [
+        "int",
+        "int",
+        "int",
+        "int"
+      ]
+    },
     "get_policy": {
       "params": [
         [
@@ -394,6 +424,17 @@
         "int",
         "int"
       ]
+    },
+    "get_review_type": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "int"
     },
     "get_round_metadata": {
       "params": [
@@ -486,6 +527,18 @@
       "kwparams": {},
       "readonly": true,
       "ret": "bool"
+    },
+    "recover_timed_out_appeal": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
     },
     "recover_timed_out_challenge": {
       "params": [

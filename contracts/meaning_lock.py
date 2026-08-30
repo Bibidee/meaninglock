@@ -16,6 +16,9 @@ MAX_EVIDENCE_REFERENCES=64
 MAX_AUDIT_RECORDS=256
 MAX_APPEALS=2
 TOPIC_MASK_MAX=u256(255)
+ROUND_NONE=u256(0)
+ROUND_CHALLENGE=u256(1)
+ROUND_APPEAL=u256(2)
 
 NONE=u256(0)
 PRESERVED=u256(1)
@@ -75,17 +78,22 @@ class MeaningLock(gl.Contract):
     recovery_deadline: TreeMap[u256, u256]
     checked_at: TreeMap[u256, u256]
     round: TreeMap[u256, u256]
+    review_type: TreeMap[u256, u256]
+    covenant_challenge_window: TreeMap[u256, u256]
+    covenant_recovery_window: TreeMap[u256, u256]
     challenger: TreeMap[u256, Address]
     reason: TreeMap[u256, str]
     challenge_url: TreeMap[u256, str]
     challenge_image_url: TreeMap[u256, str]
     publisher_bond: TreeMap[u256, u256]
-    beneficiary_bond: TreeMap[u256, u256]
     challenger_bond: TreeMap[u256, u256]
     escrow: TreeMap[u256, u256]
     paid: TreeMap[u256, bool]
     paid_to: TreeMap[u256, Address]
     paid_amount: TreeMap[u256, u256]
+    paid_to_publisher: TreeMap[u256, u256]
+    paid_to_beneficiary: TreeMap[u256, u256]
+    paid_to_challenger: TreeMap[u256, u256]
     note: TreeMap[u256, str]
     description: TreeMap[u256, str]
     source_version: TreeMap[u256, u256]
@@ -102,11 +110,11 @@ class MeaningLock(gl.Contract):
     evidence_digest: TreeMap[u256, str]
     evidence_submitted_at: TreeMap[u256, u256]
     appeal_count: TreeMap[u256, u256]
+    pre_appeal_verdict: TreeMap[u256, u256]
     appeal_deadline: TreeMap[u256, u256]
     appeal_reason: TreeMap[u256, str]
     appeal_url: TreeMap[u256, str]
     appeal_image_url: TreeMap[u256, str]
-    appeal_bond: TreeMap[u256, u256]
     audit_count: TreeMap[u256, u256]
     audit_action: TreeMap[u256, str]
     audit_actor: TreeMap[u256, Address]
@@ -114,6 +122,7 @@ class MeaningLock(gl.Contract):
     audit_note: TreeMap[u256, str]
 
     def __init__(self, minimum_bond: u256, challenge_window: u256, recovery_window: u256):
+        if minimum_bond==u256(0) or challenge_window==u256(0) or recovery_window==u256(0): raise gl.vm.UserError("constructor parameters must be positive")
         self.owner=gl.message.sender_address
         self.paused=False
         self.minimum_bond=minimum_bond
@@ -139,17 +148,22 @@ class MeaningLock(gl.Contract):
         self.recovery_deadline=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.checked_at=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.round=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.review_type=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.covenant_challenge_window=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.covenant_recovery_window=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.challenger=gl.storage.inmem_allocate(TreeMap[u256, Address])
         self.reason=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.challenge_url=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.challenge_image_url=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.publisher_bond=gl.storage.inmem_allocate(TreeMap[u256, u256])
-        self.beneficiary_bond=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.challenger_bond=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.escrow=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.paid=gl.storage.inmem_allocate(TreeMap[u256, bool])
         self.paid_to=gl.storage.inmem_allocate(TreeMap[u256, Address])
         self.paid_amount=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.paid_to_publisher=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.paid_to_beneficiary=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.paid_to_challenger=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.note=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.description=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.source_version=gl.storage.inmem_allocate(TreeMap[u256, u256])
@@ -166,11 +180,11 @@ class MeaningLock(gl.Contract):
         self.evidence_digest=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.evidence_submitted_at=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.appeal_count=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.pre_appeal_verdict=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.appeal_deadline=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.appeal_reason=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.appeal_url=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.appeal_image_url=gl.storage.inmem_allocate(TreeMap[u256, str])
-        self.appeal_bond=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.audit_count=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.audit_action=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.audit_actor=gl.storage.inmem_allocate(TreeMap[u256, Address])
@@ -199,6 +213,7 @@ class MeaningLock(gl.Contract):
         self._assert_live_url(live_url)
         self._assert_baseline_url(baseline_url)
         self._assert_image_optional(baseline_image_url)
+        if beneficiary == Address("0x0000000000000000000000000000000000000000"): raise gl.vm.UserError("beneficiary cannot be zero")
         self._text(statement,"statement")
         self._text(topics,"topics")
         if expires_at<=self._now(): raise gl.vm.UserError("expiry must be future")
@@ -224,16 +239,21 @@ class MeaningLock(gl.Contract):
         self.recovery_deadline[i]=u256(0)
         self.checked_at[i]=u256(0)
         self.round[i]=u256(0)
+        self.review_type[i]=ROUND_NONE
+        self.covenant_challenge_window[i]=self.challenge_window
+        self.covenant_recovery_window[i]=self.recovery_window
         self.challenger[i]=Address("0x0000000000000000000000000000000000000000")
         self.reason[i]=""
         self.challenge_url[i]=""
         self.challenge_image_url[i]=""
         self.publisher_bond[i]=gl.message.value
-        self.beneficiary_bond[i]=u256(0)
         self.challenger_bond[i]=u256(0)
         self.escrow[i]=gl.message.value
         self.paid[i]=False
         self.paid_amount[i]=u256(0)
+        self.paid_to_publisher[i]=u256(0)
+        self.paid_to_beneficiary[i]=u256(0)
+        self.paid_to_challenger[i]=u256(0)
         self.note[i]="active"
         self.description[i]=""
         self.source_version[i]=u256(1)
@@ -246,8 +266,8 @@ class MeaningLock(gl.Contract):
         self.settlement_challenger_bps[i]=u256(0)
         self.evidence_count[i]=u256(0)
         self.appeal_count[i]=u256(0)
+        self.pre_appeal_verdict[i]=NONE
         self.appeal_deadline[i]=u256(0)
-        self.appeal_bond[i]=u256(0)
         self.audit_count[i]=u256(0)
         self._audit(i,"REGISTER",gl.message.sender_address,"covenant created")
         return i
@@ -290,6 +310,8 @@ class MeaningLock(gl.Contract):
             raise gl.vm.UserError("invalid confidence threshold")
         if permitted_impact > CRITICAL:
             raise gl.vm.UserError("invalid impact threshold")
+        if visual_required and self.baseline_image_url[covenant_id] == "":
+            raise gl.vm.UserError("visual policy requires baseline image")
         self.minimum_confidence[covenant_id] = minimum_confidence
         self.permitted_impact[covenant_id] = permitted_impact
         self.visual_required[covenant_id] = visual_required
@@ -334,9 +356,9 @@ class MeaningLock(gl.Contract):
         if not self._state_allows_evidence(covenant_id): raise gl.vm.UserError("evidence phase closed")
         if gl.message.sender_address != self.publisher[covenant_id] and gl.message.sender_address != self.beneficiary[covenant_id] and gl.message.sender_address != self.challenger[covenant_id]:
             raise gl.vm.UserError("covenant party only")
+        if self.evidence_count[covenant_id] >= MAX_EVIDENCE_REFERENCES: raise gl.vm.UserError("evidence limit reached")
         n = self.evidence_count[covenant_id] + u256(1)
         self.evidence_count[covenant_id] = n
-        if n > MAX_EVIDENCE_REFERENCES: raise gl.vm.UserError("evidence limit reached")
         key = self._evidence_key_for(n, covenant_id)
         self.evidence_kind[key] = kind
         self.evidence_url[key] = url
@@ -368,13 +390,15 @@ class MeaningLock(gl.Contract):
         if gl.message.sender_address != self.publisher[covenant_id] and gl.message.sender_address != self.beneficiary[covenant_id] and gl.message.sender_address != self.challenger[covenant_id]:
             raise gl.vm.UserError("covenant party only")
         self.appeal_count[covenant_id] = self.appeal_count[covenant_id] + u256(1)
+        self.pre_appeal_verdict[covenant_id] = self.verdict[covenant_id]
         self.appeal_reason[covenant_id] = reason
         self._assert_image_optional(image_url)
         self._assert_live_url(evidence_url)
         self.appeal_url[covenant_id] = evidence_url
         self.appeal_image_url[covenant_id] = image_url
-        self.appeal_deadline[covenant_id] = self._now() + self.challenge_window
+        self.appeal_deadline[covenant_id] = self._now() + self.covenant_challenge_window[covenant_id]
         self.state[covenant_id] = PENDING
+        self.review_type[covenant_id] = ROUND_APPEAL
         self.challenge_url[covenant_id] = evidence_url
         self.challenge_image_url[covenant_id] = image_url
         self.reason[covenant_id] = reason
@@ -424,8 +448,9 @@ class MeaningLock(gl.Contract):
         self.challenger_bond[covenant_id]=gl.message.value
         self.escrow[covenant_id]=self.escrow[covenant_id]+gl.message.value
         self.state[covenant_id]=PENDING
+        self.review_type[covenant_id]=ROUND_CHALLENGE
         self.challenged_at[covenant_id]=self._now()
-        self.challenge_deadline[covenant_id]=self._now()+self.challenge_window
+        self.challenge_deadline[covenant_id]=self._now()+self.covenant_challenge_window[covenant_id]
         self.round[covenant_id]=self.round[covenant_id]+u256(1)
         self.note[covenant_id]="challenge pending"
         self._audit(covenant_id,"CHALLENGE_OPENED",gl.message.sender_address,"semantic review requested")
@@ -466,13 +491,14 @@ class MeaningLock(gl.Contract):
             self.challenge_image_url[covenant_id]=""
             self.challenged_at[covenant_id]=u256(0)
             self.challenge_deadline[covenant_id]=u256(0)
+            self.review_type[covenant_id]=ROUND_NONE
             self.state[covenant_id]=ACTIVE
             self.appeal_deadline[covenant_id]=u256(0)
         else:
             self.state[covenant_id]=RESOLVED
-            self.appeal_deadline[covenant_id]=self._now()+self.challenge_window
+            self.appeal_deadline[covenant_id]=self._now()+self.covenant_challenge_window[covenant_id]
         if final==UNVERIFIABLE:
-            self.recovery_deadline[covenant_id]=self._now()+self.recovery_window
+            self.recovery_deadline[covenant_id]=self._now()+self.covenant_recovery_window[covenant_id]
             self.note[covenant_id]="unverifiable; recovery window"
         elif final==PRESERVED: self.note[covenant_id]="preserved"
         else: self.note[covenant_id]="adverse verdict"
@@ -506,6 +532,14 @@ class MeaningLock(gl.Contract):
 
     def _derive_for_covenant(self, covenant_id: u256, record) -> u256:
         """Apply covenant-specific policy after validators agree on categories."""
+        # A confirmed change/removal is always adverse, even when its impact
+        # exceeds the configured reporting threshold.  Thresholds may only
+        # downgrade ambiguous/preserved evidence; they must never erase a
+        # critical breach into UNVERIFIABLE.
+        if record["outcome"] == CHANGED or record["outcome"] == REMOVED:
+            if record["confidence"] < self.minimum_confidence[covenant_id]:
+                return UNVERIFIABLE
+            return record["outcome"]
         if record["confidence"] < self.minimum_confidence[covenant_id]:
             return UNVERIFIABLE
         if record["impact"] > self.permitted_impact[covenant_id]:
@@ -533,6 +567,7 @@ class MeaningLock(gl.Contract):
     def claim_adverse(self,covenant_id:u256)->None:
         self._known(covenant_id)
         self._beneficiary(covenant_id)
+        if self.state[covenant_id] != RESOLVED or self.review_type[covenant_id] != ROUND_NONE: raise gl.vm.UserError("resolved review required")
         if self.verdict[covenant_id]!=CHANGED and self.verdict[covenant_id]!=REMOVED: raise gl.vm.UserError("adverse verdict required")
         if self.appeal_deadline[covenant_id] != u256(0) and self._deadline_is_open(self.appeal_deadline[covenant_id]): raise gl.vm.UserError("appeal window still open")
         self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"beneficiary claimed adverse verdict")
@@ -566,7 +601,7 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def recover_unverifiable(self,covenant_id:u256)->None:
         self._known(covenant_id)
-        if self.verdict[covenant_id]!=UNVERIFIABLE or self._now()<self.recovery_deadline[covenant_id]: raise gl.vm.UserError("unverifiable recovery unavailable")
+        if self.state[covenant_id]!=RESOLVED or self.review_type[covenant_id]!=ROUND_NONE or self.verdict[covenant_id]!=UNVERIFIABLE or self.recovery_deadline[covenant_id]==u256(0) or self._now()<self.recovery_deadline[covenant_id]: raise gl.vm.UserError("unverifiable recovery unavailable")
         if gl.message.sender_address!=self.publisher[covenant_id] and gl.message.sender_address!=self.beneficiary[covenant_id] and gl.message.sender_address!=self.challenger[covenant_id]: raise gl.vm.UserError("party only")
         self._audit(covenant_id,"RECOVERY_REQUESTED",gl.message.sender_address,"unverifiable recovery")
         self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"unverifiable recovery")
@@ -575,10 +610,10 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def recover_timed_out_challenge(self,covenant_id:u256)->None:
         self._known(covenant_id)
-        self._publisher(covenant_id)
-        if self.state[covenant_id]!=PENDING or self._now()<=self.challenge_deadline[covenant_id]: raise gl.vm.UserError("timed out pending challenge required")
-        self.verdict[covenant_id]=UNVERIFIABLE
-        if self._expiry_is_open(covenant_id): self.state[covenant_id]=ACTIVE
+        if self.state[covenant_id]!=PENDING or self.review_type[covenant_id]!=ROUND_CHALLENGE or self._now()<=self.challenge_deadline[covenant_id]: raise gl.vm.UserError("timed out challenge required")
+        if self._expiry_is_open(covenant_id):
+            self.verdict[covenant_id]=NONE
+            self.state[covenant_id]=ACTIVE
         else:
             self.verdict[covenant_id]=EXPIRED
             self.state[covenant_id]=CLOSED
@@ -592,6 +627,17 @@ class MeaningLock(gl.Contract):
         self.challenge_image_url[covenant_id]=""
         self.challenged_at[covenant_id]=u256(0)
         self.challenge_deadline[covenant_id]=u256(0)
+        self.review_type[covenant_id]=ROUND_NONE
+
+    @gl.public.write
+    def recover_timed_out_appeal(self,covenant_id:u256)->None:
+        self._known(covenant_id)
+        if self.state[covenant_id]!=PENDING or self.review_type[covenant_id]!=ROUND_APPEAL or self._now()<=self.challenge_deadline[covenant_id]: raise gl.vm.UserError("timed out appeal required")
+        self.state[covenant_id]=RESOLVED
+        self.verdict[covenant_id]=self.pre_appeal_verdict[covenant_id]
+        self.appeal_deadline[covenant_id]=u256(0)
+        self.review_type[covenant_id]=ROUND_NONE
+        self._audit(covenant_id,"APPEAL_TIMEOUT",gl.message.sender_address,"original adverse verdict restored")
 
     @gl.public.write
     def cancel_before_challenge(self,covenant_id:u256,reason:str)->None:
@@ -615,6 +661,9 @@ class MeaningLock(gl.Contract):
         self.paid[covenant_id]=self.escrow[covenant_id]==u256(0)
         self.paid_to[covenant_id]=recipient
         self.paid_amount[covenant_id]=self.paid_amount[covenant_id]+amount
+        if recipient == self.publisher[covenant_id]: self.paid_to_publisher[covenant_id]=self.paid_to_publisher[covenant_id]+amount
+        elif recipient == self.beneficiary[covenant_id]: self.paid_to_beneficiary[covenant_id]=self.paid_to_beneficiary[covenant_id]+amount
+        elif recipient == self.challenger[covenant_id]: self.paid_to_challenger[covenant_id]=self.paid_to_challenger[covenant_id]+amount
         if self.paid[covenant_id]: self.state[covenant_id]=CLOSED
         self.note[covenant_id]=note
         self._audit(covenant_id,"TRANSFER_EMITTED",recipient,note)
@@ -638,6 +687,11 @@ class MeaningLock(gl.Contract):
         if not self.paid[covenant_id]:
             return (False,self.publisher[covenant_id],u256(0),self.note[covenant_id])
         return (self.paid[covenant_id],self.paid_to[covenant_id],self.paid_amount[covenant_id],self.note[covenant_id])
+
+    @gl.public.view
+    def get_payout_totals(self, covenant_id: u256) -> tuple[u256, u256, u256, u256]:
+        self._known(covenant_id)
+        return (self.paid_amount[covenant_id], self.paid_to_publisher[covenant_id], self.paid_to_beneficiary[covenant_id], self.paid_to_challenger[covenant_id])
 
     @gl.public.view
     def get_identity(self, covenant_id: u256) -> tuple[str, str, str]:
@@ -755,15 +809,25 @@ class MeaningLock(gl.Contract):
         return (self.paused, self.minimum_bond, self.challenge_window, self.recovery_window)
 
     @gl.public.view
+    def get_covenant_windows(self, covenant_id: u256) -> tuple[u256, u256]:
+        self._known(covenant_id)
+        return (self.covenant_challenge_window[covenant_id], self.covenant_recovery_window[covenant_id])
+
+    @gl.public.view
+    def get_review_type(self, covenant_id: u256) -> u256:
+        self._known(covenant_id)
+        return self.review_type[covenant_id]
+
+    @gl.public.view
     def is_claimable(self, covenant_id: u256) -> bool:
         self._known(covenant_id)
         if self.paid[covenant_id]:
             return False
-        if self.verdict[covenant_id] == CHANGED or self.verdict[covenant_id] == REMOVED:
-            return True
+        if (self.verdict[covenant_id] == CHANGED or self.verdict[covenant_id] == REMOVED) and self.state[covenant_id] == RESOLVED and self.review_type[covenant_id] == ROUND_NONE:
+            return self.appeal_deadline[covenant_id] == u256(0) or self._deadline_has_elapsed(self.appeal_deadline[covenant_id])
         if self.verdict[covenant_id] == PRESERVED and self._now() >= self.expires_at[covenant_id]:
             return True
-        if self.verdict[covenant_id] == UNVERIFIABLE and self._now() >= self.recovery_deadline[covenant_id]:
+        if self.verdict[covenant_id] == UNVERIFIABLE and self.state[covenant_id] == RESOLVED and self.review_type[covenant_id] == ROUND_NONE and self.recovery_deadline[covenant_id] != u256(0) and self._now() >= self.recovery_deadline[covenant_id]:
             return True
         return False
 
@@ -785,8 +849,8 @@ class MeaningLock(gl.Contract):
         reviewers, and Explorer users who need to reconstruct why a ledger moved.
         """
         next_number = self.audit_count[covenant_id] + u256(1)
+        if next_number > MAX_AUDIT_RECORDS: return
         self.audit_count[covenant_id] = next_number
-        if next_number > MAX_AUDIT_RECORDS: raise gl.vm.UserError("audit limit reached")
         key = self._audit_key_for(next_number, covenant_id)
         self.audit_action[key] = action
         self.audit_actor[key] = actor
@@ -1070,7 +1134,7 @@ class MeaningLock(gl.Contract):
 
     def _escrow_matches_components(self, covenant_id: u256) -> bool:
         self._known(covenant_id)
-        return self.escrow[covenant_id] == self.publisher_bond[covenant_id] + self.beneficiary_bond[covenant_id] + self.challenger_bond[covenant_id]
+        return self.escrow[covenant_id] == self.publisher_bond[covenant_id] + self.challenger_bond[covenant_id]
 
     def _basis_points_are_valid(self, covenant_id: u256) -> bool:
         self._known(covenant_id)
@@ -1147,7 +1211,7 @@ class MeaningLock(gl.Contract):
 
     def _open_recovery_window(self, covenant_id: u256) -> None:
         self._known(covenant_id)
-        self.recovery_deadline[covenant_id] = self._now() + self.recovery_window
+        self.recovery_deadline[covenant_id] = self._now() + self.covenant_recovery_window[covenant_id]
         self.note[covenant_id] = "recovery window open"
 
     def _close_without_transfer(self, covenant_id: u256, verdict: u256, note: str) -> None:

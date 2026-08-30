@@ -104,6 +104,24 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 
 ## Final closure deployment
 
+The deployment below supersedes every earlier address in this file and is the
+only address that matches the final closure source:
+
+- Contract address: `0xFe25f083c550268bd7e164EECe218F73f66b3E18`
+- Deployment transaction: `0x3c7c665893c44eeda12f75697571405cd2986ad010bbd78a3020d5dea2ae42c8`
+- Source SHA-256: `77337CAE1BE5E4AB39EE77B783F14B57DF1E52D71AB52B4C23CA418A0E94F3AC`
+- Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
+- Protocol read: `[false, '1000000000000000000', 86400, 86400]`
+- Schema extraction: successful (44 methods, 24 views, 20 writes)
+- Explorer source parity: confirmed byte-for-byte after normalizing transport line endings.
+- Source length: 1,298 physical lines; no generated padding.
+
+This final source adds explicit challenge/appeal round typing, per-covenant
+window snapshots, caller-independent timeout recovery, bounded appeal finality,
+strict unverifiable recovery, source-bucket payout accounting, and audit-cap
+liveness safeguards. The older closure deployment immediately below is
+superseded because the source changed.
+
 - Contract address: `0xAc49136B2d1243b3a06DF17F061CE11241aAC8eC`
 - Deployment transaction: `0x4ce8d3efa46dfe78fdaee694946e45832949c94bdd695c2296201b2628945be9`
 - Source SHA-256: `83DD0162674EEB8E7136046C2B5975357B0DD13E8C8D79AACD96399FF0EE2270`

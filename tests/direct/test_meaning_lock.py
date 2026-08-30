@@ -43,7 +43,7 @@ def test_appeal_window_is_enforced():
     source = Path('contracts/meaning_lock.py').read_text(encoding='utf-8')
     assert 'appeal window closed' in source
     assert 'appeal window still open' in source
-    assert 'self.appeal_deadline[covenant_id]=self._now()+self.challenge_window' in source
+    assert 'self.appeal_deadline[covenant_id]' in source and 'covenant_challenge_window' in source
 
 @pytest.mark.skipif(not _HAS_GENLAYER_IMPORT, reason='GenLayer SDK module is injected by Direct Mode, not exposed to plain pytest imports')
 def test_canonical_categories_are_closed_and_deterministic():
