@@ -2,13 +2,26 @@
 
 ## CURRENT CANONICAL DEPLOYMENT (CORRECTED SOURCE)
 
+The newest frozen-source deployment supersedes the earlier corrected-source
+address below. Its deployment and initial covenant setup are finalized.
+
+- Address: `0x74FB9B259a3BC0d8852de0c2597952360903294e`
+- Deployment transaction: `0xa5dad7eca10b63dd76630ead7a465d4d5fc84df01e576c0b748f960fc42b8e12`
+- Source commit: `b8ec382da301ad2358a674e517da45bd3331d326`
+- Contract SHA-256: `8E71D9660853E3D0364B994B3F0849EDBF0F93A04F37B81B60F2F0CC35B6F022`
+- Constructor: `1000000000000000000`, `86400`, `86400`; deployment `FINALIZED`, consensus `ACCEPTED`
+- Schema: 50 methods (28 view, 22 write)
+- Covenant 1 registration: `0x27a0dfef5c693cbb649f53252aad8134a1b0c30c8252c92a09daa782aafa742f` — `FINALIZED`
+- Covenant 1 activation: `0x0a84acc919434648a7873563d3bfa76e02ea09ed2aec2bac52b74ff4fa5b1034` — `FINALIZED`
+
+
 - Network: GenLayer Studio Network
 - Address: `0x40336e78de0ecc6d92c6d863a02d9f5775ce4c1c`
 - Deployment transaction: `0x40336e78de0ecc6d92c6d863a02d9f5775ce4c1cf71ad135d937b900430e8d61`
 - Source commit: `010c2ffb60c574ad3baddd6a80649132ce6846d1`
 - Contract SHA-256: `65C376CD63FDBB9C46151B22D6103CAD4A0E106862526B27DF275D2269DCC9F3`
 - Constructor: `1000000000000000000`, `86400`, `86400`; deployment `FINALIZED`, consensus `ACCEPTED`
-- Schema: 50 methods (27 view, 23 write), including `get_challenge_source_version` and `get_round_evidence_reference`
+- Schema: 50 methods (28 view, 22 write), including `get_challenge_source_version` and `get_round_evidence_reference`
 - Live covenant ID: `1`
 - Registration: `0x548152cb42dc272fc74c20961deedb6f890440decad3dd06f8973adb85d8df9a` — `FINALIZED`
 - Activation: `0x6bf5894a2b7b853fe2c1866ccf65d4984543b08d1139840b7740c39141a14d07` — `FINALIZED`
@@ -33,7 +46,7 @@ source. All five user-initiated transactions finalized successfully.
 - Updated contract SHA-256: `DA1C66BC66A3D3C2E57248B9B2502E2F29928EA4E2AF2F1A7EAC6CA68BBA1B36`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
-- Updated schema: 48 methods (26 view, 22 write)
+- Historical schema: 48 methods (26 view, 22 write)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed; Explorer exposes the final source and 48-method ABI.
 
@@ -82,7 +95,7 @@ These transactions belong to the superseded pre-hardening deployment
 ## VALIDATION AND TEST EVIDENCE
 
 - `genvm-lint check`: passed (3 checks)
-- `genvm-lint validate`: passed; 48 methods (26 view, 22 write)
+- `genvm-lint validate`: passed for the historical source; 48 methods (26 view, 22 write)
 - `genvm-lint schema`: written successfully
 - `genvm-lint typecheck`: no type errors
 - Direct Mode: 32 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT activation)
