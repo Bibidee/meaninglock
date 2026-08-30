@@ -2,6 +2,22 @@
 
 MeaningLock is a standalone GenLayer Intelligent Contract primitive for locking GEN behind a public covenant whose material meaning must remain intact. It is a reusable primitive, not a frontend product. Correctness, deterministic settlement, and auditable lifecycle rules take priority over source length.
 
+## Canonical deployment
+
+The frozen source is deployed on GenLayer Studio Network at
+[`0x74FB9B259a3BC0d8852de0c2597952360903294e`](https://explorer-studio.genlayer.com/address/0x74FB9B259a3BC0d8852de0c2597952360903294e).
+The source commit is `b8ec382da301ad2358a674e517da45bd3331d326` and its
+SHA-256 is `8E71D9660853E3D0364B994B3F0849EDBF0F93A04F37B81B60F2F0CC35B6F022`.
+The Explorer currently contains three clean live demonstrations:
+
+- Covenant 1 — Service Fee: `ACTIVE / PRESERVED / ROUND_NONE`
+- Covenant 3 — Withdrawal Availability: `ACTIVE / PRESERVED / ROUND_NONE`
+- Covenant 4 — Refund Window: `ACTIVE / PRESERVED / ROUND_NONE`
+
+Each clean covenant retains a 1 GEN publisher bond while its challenger bond
+has been resolved. Covenant 2 is explicitly retained as a halted historical
+record because its evidence URL was mistyped; it was never verified.
+
 ## Design
 
 Deterministic state holds the parties, escrow ledger, lifecycle, evidence references, immutable audit sequence, policy thresholds, appeal windows, settlement basis points, and canonical verdict. Verification performs web fetch/render, screenshot inspection and optional image evidence inside a GenLayer consensus block. Validators compare only compact categorical fields, never raw HTML, screenshots, prose, or timestamps. This minimizes — but cannot guarantee elimination of — nondeterministic `UNDETERMINED` outcomes.
