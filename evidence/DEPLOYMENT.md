@@ -2,8 +2,8 @@
 
 ## CURRENT CANONICAL DEPLOYMENT (CORRECTED SOURCE)
 
-The newest frozen-source deployment supersedes the earlier corrected-source
-address below. Its deployment and initial covenant setup are finalized.
+The newest frozen-source deployment is the sole canonical submission address.
+Its complete payable lifecycle proof is finalized and source-matched.
 
 - Address: `0x74FB9B259a3BC0d8852de0c2597952360903294e`
 - Deployment transaction: `0xa5dad7eca10b63dd76630ead7a465d4d5fc84df01e576c0b748f960fc42b8e12`
@@ -13,6 +13,14 @@ address below. Its deployment and initial covenant setup are finalized.
 - Schema: 50 methods (28 view, 22 write)
 - Covenant 1 registration: `0x27a0dfef5c693cbb649f53252aad8134a1b0c30c8252c92a09daa782aafa742f` — `FINALIZED`
 - Covenant 1 activation: `0x0a84acc919434648a7873563d3bfa76e02ea09ed2aec2bac52b74ff4fa5b1034` — `FINALIZED`
+- Covenant 1 challenge: `0xb40543d6fa8ad9f04bed516ede3c5fe475e65677d9837771ddd33723203ce256` — `FINALIZED`, `SUCCESS`
+- Covenant 1 verification: `0x6b43b5f75b62aff44e402f508a3c949109a1413a23a708c2c1c560a45eea5fa2` — `ACCEPTED`, `SUCCESS`, consensus `Accepted`
+- Final read: `ACTIVE`, verdict `PRESERVED`, review type `ROUND_NONE`, escrow `1000000000000000000`
+- Payout totals: total `1000000000000000000`; publisher `0`; beneficiary `0`; challenger `1000000000000000000`
+- Challenger bond: returned/resolved (`0` remaining); publisher bond: locked (`1000000000000000000` remaining)
+- Protocol read: `[false, "1000000000000000000", 86400, 86400]`
+- Explorer source parity: confirmed against the frozen source commit and SHA-256 above.
+- CI: successful workflow run `33330919082`; Direct Mode `33 passed, 2 skipped`.
 
 
 - Network: GenLayer Studio Network
@@ -36,8 +44,8 @@ address below. Its deployment and initial covenant setup are finalized.
 > retained as historical evidence until the corrected source is validated and
 > freshly deployed. Do not represent it as byte-identical to the working tree.
 
-The deployment below is the current canonical address for the final hardening
-source. All five user-initiated transactions finalized successfully.
+The deployment below is superseded historical evidence for the final hardening
+source. It is not the canonical submission address.
 
 - Network: GenLayer Studio Network
 - Address: `0x7ef7f667ceC8DB0d68b6E0c11263c97Af0238109`
