@@ -142,6 +142,9 @@ independently proves adverse settlement, UNVERIFIABLE recovery, appeal
 finality/timeout, repeated preserved rounds, multimodal evidence, escrow
 conservation, and audit-cap liveness (`15 passed, 3 skipped`).
 
+The environment-configured integration test also passed against this address,
+reading `get_protocol_config` and `get_status(1)` over the Studio RPC.
+
 This is the sole canonical submission address. It supersedes
 `0xFe25f083c550268bd7e164EECe218F73f66b3E18` because the terminal-state
 closure source changed.

@@ -9,8 +9,11 @@ CLI = Path(__file__).parents[2] / "work" / "genlayer-cli" / "node_modules" / "ge
 
 
 def _live_call(method, *args):
+    command = ["node", str(CLI), "call", "--rpc", RPC, ADDRESS, method]
+    if args:
+        command += ["--args", *map(str, args)]
     result = subprocess.run(
-        ["node", str(CLI), "call", "--rpc", RPC, ADDRESS, method, *map(str, args)],
+        command,
         capture_output=True, text=True, check=True,
     )
     return result.stdout
