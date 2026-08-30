@@ -519,6 +519,13 @@ class MeaningLock(gl.Contract):
         visual_required=self.visual_required[covenant_id]
         fallback_allowed=self.fallback_allowed[covenant_id]
         def reduce(record):
+            if not isinstance(record, dict): return UNVERIFIABLE
+            for key in ("outcome", "impact", "confidence", "mask"):
+                if key not in record: return UNVERIFIABLE
+                try: record[key]=u256(record[key])
+                except: return UNVERIFIABLE
+            if record["outcome"] < PRESERVED or record["outcome"] > UNVERIFIABLE or record["impact"] > CRITICAL or record["confidence"] > HIGH or record["mask"] > TOPIC_MASK_MAX:
+                return UNVERIFIABLE
             if record["outcome"] == CHANGED or record["outcome"] == REMOVED:
                 return UNVERIFIABLE if record["confidence"] < minimum_confidence else record["outcome"]
             if record["confidence"] < minimum_confidence or record["impact"] > permitted_impact:

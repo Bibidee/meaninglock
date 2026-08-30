@@ -81,6 +81,24 @@ frozen covenant semantics remain governed separately.
 - `tests/direct/` and `tests/integration/` are outside `contracts/` so lint/schema extraction cannot mistake them for contracts.
 - `scripts/release_check.ps1` verifies source isolation and the single transfer-emission helper invariant.
 
+## Threat model and integration
+
+MeaningLock assumes validators can independently reach the referenced HTTPS
+resources, while treating publishers, challengers, page authors, and model
+outputs as adversarial. The contract cannot guarantee that a remote site stays
+available or that an asynchronous GEN receiver accepts a transfer; bounded
+timeouts and deterministic recovery prevent those conditions from locking the
+escrow. Raw pages and images never enter deterministic storage.
+
+An integrating application registers a covenant with its statement, topics,
+baseline URL, 64-hex baseline commitment, beneficiary, expiry, and GEN bond. It
+then displays the read views, accepts a challenger bond and evidence reference,
+and calls `verify`. The application should treat `PRESERVED`, `CHANGED`,
+`REMOVED`, and `UNVERIFIABLE` as lifecycle events and poll `is_claimable` before
+calling the appropriate settlement or recovery method. This primitive fits API
+service commitments, published policies, pricing/terms, governance promises,
+and public product guarantees without hardcoded parties or websites.
+
 ## Verify
 
 ```powershell
