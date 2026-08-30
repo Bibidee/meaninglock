@@ -2,20 +2,33 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
-**Pending fresh deployment.** The previous addresses below are retained as
-historical evidence only. The latest source includes a Studio ABI compatibility
-fix and has not yet completed a clean payable lifecycle on a replacement address.
+The final replacement deployment below is canonical. All writes finalized
+successfully; semantic verification reached a safe `UNVERIFIABLE` result because
+the public evidence did not meet validator confidence requirements. This is
+valid lifecycle evidence, but not a preferred clean `PRESERVED` presentation.
 
 - Network: GenLayer Studio Network
-- Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497` (superseded pending fresh deployment)
-- Deployment transaction: `0x2959d6c807c88e166def8bef85b725497a7979acc1cc7810be9c602fdc5b9f44`
-- Updated source commit: `441abd1` (full commit in Git history)
+- Address: `0xE1f8896417a424543A75B4fDa6cDdc553C31184E`
+- Deployment transaction: `0x3a563e004e5e9fd5011de0d55d31067a5f2c9412b990f3ea5ee71777778dd277`
+- Updated source commit: `441abd130653efafe69262b1e917532afd4a6055`
 - Updated contract SHA-256: `909C15B5DFF5ECF66FC4936BD621B4AA7A61B3F22F42B969CED70F94C8FECC7C`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
 - Updated schema: 47 methods (26 view, 21 write)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed byte-equivalent after line-ending normalization.
+
+## FINAL CANONICAL PAYABLE LIFECYCLE PROOF
+
+- Covenant ID: `1`
+- Publisher: `0x3506660bF99b7517e941ae6CAEF16DCa2428d691`
+- Challenger: `0x607AD92a6B771745E6046bC0A5F4329e3a521309`
+- Registration transaction: `0x7f31fb647225ea0abce9879d460668b022d958dc8f693e2309c17b284b57f6c6` — `FINALIZED`, `SUCCESS`
+- Challenge transaction: `0x643fbee3bf08d168633401a0b450d1085a9ac4bdb274eb682da152469b6ab8ee` — `FINALIZED`, `SUCCESS`
+- Verification transaction: `0x103003b7cf60fa36b5a7d2865ae09ab5777b56415f92d593e193ee36b10f1309` — `FINALIZED`, `SUCCESS`
+- Verification consensus: `Accepted`; deterministic result `UNVERIFIABLE`
+- Final read: `RESOLVED`, verdict `UNVERIFIABLE`, review type `ROUND_NONE`, escrow `2000000000000000000`
+- No user-initiated transaction on this address failed or reverted.
 
 ## FAILED REPLACEMENT ATTEMPTS (NOT CANONICAL)
 
