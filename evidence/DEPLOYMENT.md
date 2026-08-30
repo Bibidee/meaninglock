@@ -108,7 +108,7 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 
 - Contract address: `0x0894953D7d3abf45Eb28713a0d03eb587ae20aDA`
 - Deployment transaction: `0x599024dc9bf5826be493da0cb823220e15e0968b6ce90899f405c8effbdb7c1f`
-- Contract-source commit: `0616d8bb550ecb46a075d102dc356429306599c4`
+- Contract-source commit: `091274212e1c4ef3379ed4791ff3878742435422`
 - Source SHA-256: `4E92A2AB061873E9E5DA63625727385A5BD372ED689A192A26E1B0CD7895E9C3`
 - Constructor parameters: `1000000000000000000, 86400, 86400`
 - Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
