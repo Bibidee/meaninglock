@@ -5,7 +5,7 @@
 - [x] Lint, validate, schema and typecheck exit zero using the pinned SDK.
 - [x] Direct Mode tests include mocked web, screenshot and JSON LLM responses (`gltest tests/direct` passes on Windows with the documented loader compatibility shim).
 - [x] Integration smoke tests pass locally; payable and consensus flows are recorded in `evidence/DEPLOYMENT.md`.
-- [ ] Final canonical-address payable registration/challenge/verification proof (requires Studio UI or wallet/API call-value support).
+- [x] Final canonical-address payable registration/challenge/verification proof recorded in `evidence/DEPLOYMENT.md`.
 - [x] Explorer source is byte-identical to `contracts/meaning_lock.py`.
 - [ ] A vision-capable, JSON-capable validator model is enabled.
 - [ ] `scripts/run_release.ps1` completes with no failed command.

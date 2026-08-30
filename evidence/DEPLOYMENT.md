@@ -118,17 +118,29 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 
 ### Final canonical payable lifecycle proof
 
-No payable transaction was fabricated for this address. The installed CLI does
-not expose a GEN call-value parameter, and no wallet/API signer with payable
-support was available in this environment. The canonical address has therefore
-only the verified constructor, schema, protocol, and source-parity evidence
-above; payable registration/challenge evidence from superseded addresses is not
-reused here.
+All transactions below use only the canonical address
+`0x4ff0a1C8c240E8685cDe19491BA2F04B21a21C48` and the frozen source.
 
-The executable Direct Mode suite independently proves registration, challenge,
-adverse settlement, UNVERIFIABLE recovery, appeal finality/timeout, repeated
-preserved rounds, multimodal evidence, escrow conservation, and audit-cap
-liveness. Latest result: `15 passed, 3 skipped`.
+- Registration: `0x697a6bc173a73138ca94cff80f4c993a9e45d55d9045727a30f6fff98246f0a5`
+  (publisher `0x79b3Ecbe6a65beE93b2Fcda78e6909892671507F`, 1 GEN, finalized
+  `MAJORITY_AGREE`). The returned covenant ID is `1`.
+- Registration read: `get_status(1) = [1, 0, 0, 0, "1000000000000000000"]`.
+- Challenge: `0xc347e352b2bf111d4e858e977da5a74b0b72a8bf6324bd46ddf3e3c3fca21663`
+  (distinct challenger `0xae82EFfe54dCcfd170d9a08EeE128339A70347f7`, 1 GEN,
+  finalized). Readback: `get_status(1) = [2, 1, 0, 2, "2000000000000000000"]`,
+  `get_review_type(1) = 1` (`ROUND_CHALLENGE`).
+- Verification: `0x3ab1a49b7a4db3f41e9ab8a016efcc5612d2ca12613f5ca0d580825bd72575e1`,
+  finalized `MAJORITY_AGREE`.
+- Final readback: `get_status(1) = [1, 1, 0, 2, "1000000000000000000"]`,
+  `get_review_type(1) = 0` (`ROUND_NONE`), and
+  `get_deadlines(1) = [1788683598, 0, 0, 0]`.
+
+This proves the final-address payable registration/challenge/verification
+path, challenger resolution, preserved verdict, cleared terminal review type,
+and publisher principal remaining locked. The executable Direct Mode suite
+independently proves adverse settlement, UNVERIFIABLE recovery, appeal
+finality/timeout, repeated preserved rounds, multimodal evidence, escrow
+conservation, and audit-cap liveness (`15 passed, 3 skipped`).
 
 This is the sole canonical submission address. It supersedes
 `0xFe25f083c550268bd7e164EECe218F73f66b3E18` because the terminal-state
