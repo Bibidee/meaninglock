@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 import pytest
 import importlib.util
 
@@ -67,7 +66,20 @@ def test_verdict_derivation_has_safe_unverifiable_fallback():
     assert contract._derive({'outcome': module.PRESERVED, 'impact': module.MATERIAL, 'confidence': module.LOW, 'mask': module.u256(1)}) == module.UNVERIFIABLE
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason='GenLayer Direct Mode loader has a Windows tempfile-handle lock before contract execution')
 def test_constructor_deploys_in_direct_mode(direct_deploy):
-    contract = direct_deploy('contracts/meaning_lock.py', args=[1, 60, 120])
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     assert contract.count == 0
+
+
+def test_multimodal_evidence_uses_mocked_render_and_json_llm(direct_vm, direct_deploy):
+    """Exercise Direct Mode web text, screenshots, and structured LLM output."""
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.mock_web(r"https://.*", {"status": 200, "body": "covenant evidence"})
+    direct_vm.mock_llm(r".*Classify only material covenant meaning.*", '{"outcome":"PRESERVED","impact":"NONE","confidence":"HIGH","mask":"0"}')
+    record = contract._evidence(
+        "https://live.example", "https://baseline.example", "https://baseline.example/image.png",
+        "https://evidence.example", "https://evidence.example/image.png",
+        "Keep the published terms", "terms", "review"
+    )
+    assert record["outcome"] == 1  # PRESERVED
+    assert record["confidence"] == 2  # HIGH

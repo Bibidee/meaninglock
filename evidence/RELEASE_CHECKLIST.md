@@ -3,7 +3,7 @@
 - [ ] `contracts/` contains only `meaning_lock.py`.
 - [x] `contracts/meaning_lock.py` is a single deployable candidate; no artificial line-count requirement is used.
 - [x] Lint, validate, schema and typecheck exit zero using the pinned SDK.
-- [ ] Direct Mode tests include mocked web, screenshot and JSON LLM responses (skipped on Windows; requires supported Linux/WSL runner).
+- [x] Direct Mode tests include mocked web, screenshot and JSON LLM responses (`gltest tests/direct` passes on Windows with the documented loader compatibility shim).
 - [x] Integration smoke tests pass locally; payable and consensus flows are recorded in `evidence/DEPLOYMENT.md`.
 - [x] Explorer source is byte-identical to `contracts/meaning_lock.py`.
 - [ ] A vision-capable, JSON-capable validator model is enabled.
@@ -12,4 +12,4 @@
 - [x] Lifecycle includes uncontested expiry, repeatable preserved rounds, bounded appeals, and timeout recovery that reopens monitoring.
 - [x] Escrow components are tracked and payout ordering follows checks-effects-interactions.
 - [x] Input bounds, HTTPS URL policy, digest format, evidence caps, and collision-safe storage keys are enforced.
-- [ ] Direct Mode multimodal mocks pass on a supported non-Windows runner (external environment item).
+- [x] Direct Mode multimodal mocks pass through the official `genlayer-test` runner; the shim only compensates for its Windows temporary-file and empty-screenshot mock defects.
