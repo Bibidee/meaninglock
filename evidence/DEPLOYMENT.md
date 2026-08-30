@@ -3,10 +3,10 @@
 ## CURRENT CANONICAL DEPLOYMENT
 
 - Network: GenLayer Studio Network
-- Address: `0xEED34BF9054C82622FB6BA62A10546D291F15c8B`
-- Deployment transaction: `0xdf42855f6ea768e04266eae2490fc5cb810f99e1176feee00abcaf21311b4da6`
-- Source commit: `6307be8edd6cae56344a12b83f46369d172da36b`
-- Contract SHA-256: `5A741D898C404F01CB78CAEE9826E2FB332DA0464440D4263424C96FBDF7180B`
+- Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497`
+- Deployment transaction: `0x2959d6c807c88e166def8bef85b725497a7979acc1cc7810be9c602fdc5b9f44`
+- Source commit: `6fcc00edb249d89b2a9b2f5c56d29342b54cec62`
+- Contract SHA-256: `90F5F772971330EEF267A0A7B2CE7871AD7539F586F7317E99A73ABDADC017FB`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
 - Schema: 44 methods (24 view, 20 write)
@@ -17,18 +17,19 @@
 
 All transactions below are on the canonical address above.
 
-- Covenant ID: `2` (fresh active covenant; ID 1 was used by an earlier retry and is historical test state)
+- Covenant ID: `1`
 - Publisher: `0x79b3Ecbe6a65beE93b2Fcda78e6909892671507F`
 - Challenger: `0xae82effe54dccfd170d9a08eee128339a70347f7`
-- Registration transaction: `0xf7d257400e045b503312ae58ab3e277cd1e4868e3a14a003efa258cbc643a667`
+- Registration transaction: `0xf25a454c57511b787ac7b4bbe3c8a82a0a67a54c2b8b75e62505a3bcb35b638e`
 - Registration read: `ACTIVE`, verdict `NONE`, review type `ROUND_NONE`, escrow `1000000000000000000`
-- Challenge transaction: `0x0fb374f1ce0650c90411a6eee854f9dc96e822d8746e42bae10d258d18b757b0`
+- Challenge transaction: `0x01f47341c2df44e04304742aa152c61074e528855cc331844036abafa07dbb37`
 - Challenge read: `PENDING`, review type `ROUND_CHALLENGE`, escrow `2000000000000000000`
-- Verification transaction: `0xc7f73d1b5da75c133433eb3965656a547395e7402184aa0f5e3eda495d9c8907`
+- Verification transaction: `0x79cca66941809c450efdbd8f6914997ba9bc02d7cb912aaea42ae8d3af45f6a4`
 - Verification consensus: `MAJORITY_AGREE`
 - Final verdict: `PRESERVED`
 - Final read: `ACTIVE`, verdict `PRESERVED`, review type `ROUND_NONE`, escrow `1000000000000000000`
 - Challenger bond was resolved and publisher principal remained locked.
+- Evidence source: immutable raw GitHub file pinned to commit `5226426d2627f4f3c54bcdaf7e024961df31c284`.
 
 ## VALIDATION AND TEST EVIDENCE
 
@@ -41,13 +42,10 @@ All transactions below are on the canonical address above.
 
 ## EXPLORER ERROR REVIEW
 
-The first payable-proof retry on this deployment used covenant `1` and ended
-with transaction `0x9dc40e4c69d9575d9ecc36e9d85109e51fe1eae84bf6926c5da229a5ece34ff7`.
-The resulting read was `RESOLVED + UNVERIFIABLE + ROUND_NONE` with escrow still
-`2 GEN`; no payout occurred. The available receipt does not conclusively prove
-whether this was validator disagreement or unavailable evidence, so it is not
-labelled intentional. It is historical test state and is excluded from the
-canonical payable proof, which uses covenant `2`.
+The canonical address has only successful user-initiated deployment,
+registration, challenge, and verification transactions. Internal validator
+`ERROR`/`idle` diagnostics were present in the consensus receipt but did not
+prevent final `MAJORITY_AGREE` or mutate the transaction outcome.
 
 ## SUPERSEDED DEPLOYMENTS
 
@@ -62,3 +60,5 @@ The following addresses are historical and must not be used as the submission ad
 - `0x120Cf583bC1f563Af0686B3aDbF8f90b85fd64A0` — superseded; verification finalized `MAJORITY_DISAGREE` / `UNVERIFIABLE`.
 - `0xc7754290690596D4e0Ba8b6E453A2cDc718fcfB2` — superseded; verification finalized `MAJORITY_DISAGREE` and remained pending.
 - `0x7b18134d65d2E271BDEBCD5A2A42B2df587CfF32` — superseded; static-content verification finalized `MAJORITY_DISAGREE` / `UNVERIFIABLE`.
+- `0xEED34BF9054C82622FB6BA62A10546D291F15c8B` — superseded by semantic-verdict equivalence correction.
+- `0xf10696275B6847fA328E24e8A82ddBb2337Cf525` — superseded; verification reached `MAJORITY_AGREE` but classified the README evidence as `UNVERIFIABLE`.
