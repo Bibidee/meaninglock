@@ -171,7 +171,8 @@ path, challenger resolution, preserved verdict, cleared terminal review type,
 and publisher principal remaining locked. The executable Direct Mode suite
 independently proves adverse settlement, UNVERIFIABLE recovery, appeal
 finality/timeout, repeated preserved rounds, multimodal evidence, escrow
-conservation, and audit-cap liveness (`15 passed, 3 skipped`).
+conservation, and audit-cap liveness (`18 passed, 3 skipped` in the final
+release run).
 
 The environment-configured integration test also passed against this address,
 reading `get_protocol_config` and `get_status(1)` over the Studio RPC.

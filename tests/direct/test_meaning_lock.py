@@ -203,6 +203,43 @@ def test_appeal_timeout_restores_prior_adverse_verdict(direct_vm, direct_deploy,
     assert contract.recovery_deadline[covenant] == 0
 
 
+def test_two_adverse_appeals_reach_finality_and_settle(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)
+    for expected_count in (1, 2):
+        direct_vm.sender = direct_alice
+        contract.appeal_verdict(covenant, "adverse appeal", "https://appeal.example", "")
+        _mock_verdict(direct_vm, "REMOVED" if expected_count == 2 else "MATERIAL_CHANGE")
+        assert contract.verify(covenant) in (2, 3)
+        assert contract.appeal_count[covenant] == expected_count
+        assert contract.get_review_type(covenant) == 0
+        direct_vm.clear_mocks()
+    assert contract.appeal_deadline[covenant] == 0
+    assert contract.is_claimable(covenant) is True
+    direct_vm.sender = direct_alice
+    contract.claim_adverse(covenant)
+    assert contract.get_status(covenant)[0] == 4 and contract.get_status(covenant)[4] == 0
+    with direct_vm.expect_revert("adverse resolved covenant required"):
+        contract.appeal_verdict(covenant, "third", "https://appeal.example", "")
+
+
+def test_removed_verdict_follows_adverse_finality(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "removed", "https://evidence.example", "")
+    _mock_verdict(direct_vm, "REMOVED")
+    assert contract.verify(covenant) == 3
+    assert contract.get_review_type(covenant) == 0
+    direct_vm.clear_mocks()
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    assert contract.is_claimable(covenant) is True
+    direct_vm.sender = direct_bob
+    contract.claim_adverse(covenant)
+    assert contract.get_status(covenant)[0] == 4
+
+
 def test_repeated_preserved_rounds_refund_each_challenger(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     covenant = _register(contract, direct_vm, direct_alice, direct_bob)
