@@ -2,18 +2,23 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
+**Pending fresh deployment.** The previously deployed address below is retained
+as historical evidence only because the contract source changed in the final
+security pass. It must not be presented as the canonical deployment until the
+new source is deployed and Explorer parity is confirmed.
+
 - Network: GenLayer Studio Network
-- Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497`
+- Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497` (superseded pending fresh deployment)
 - Deployment transaction: `0x2959d6c807c88e166def8bef85b725497a7979acc1cc7810be9c602fdc5b9f44`
-- Source commit: `6fcc00edb249d89b2a9b2f5c56d29342b54cec62`
-- Contract SHA-256: `90F5F772971330EEF267A0A7B2CE7871AD7539F586F7317E99A73ABDADC017FB`
+- Updated source commit: `3f5f63ebb434a543eedfa7b12fefdf871f3f70b9`
+- Updated contract SHA-256: `6F4156C961D1C5077001FE3AD7BCA862CAF609BCB7728C3083B6BA4F4356BC86`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
-- Schema: 44 methods (24 view, 20 write)
+- Updated schema: 47 methods (26 view, 21 write)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed byte-equivalent after line-ending normalization.
 
-## FINAL CANONICAL PAYABLE LIFECYCLE PROOF
+## HISTORICAL PAYABLE LIFECYCLE PROOF (SUPERSEDED ADDRESS)
 
 All transactions below are on the canonical address above.
 
