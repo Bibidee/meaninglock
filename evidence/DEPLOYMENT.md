@@ -40,9 +40,9 @@ Its complete payable lifecycle proof is finalized and source-matched.
 
 ## HISTORICAL DEPLOYMENT (SOURCE-PREVIOUS)
 
-> **Superseded by an unreleased corrective source change.** This address is
-> retained as historical evidence until the corrected source is validated and
-> freshly deployed. Do not represent it as byte-identical to the working tree.
+> **Superseded historical deployment.** The corrected source has since been
+> validated and freshly deployed at the canonical address above. Do not use
+> this address for submission.
 
 The deployment below is superseded historical evidence for the final hardening
 source. It is not the canonical submission address.
@@ -106,7 +106,7 @@ These transactions belong to the superseded pre-hardening deployment
 - `genvm-lint validate`: passed for the historical source; 48 methods (26 view, 22 write)
 - `genvm-lint schema`: written successfully
 - `genvm-lint typecheck`: no type errors
-- Direct Mode: 32 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT activation)
+- Direct Mode: 33 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT lifecycle coverage)
 - Plain integration pytest: 1 skipped when no live `MEANINGLOCK_ADDRESS`/RPC environment is configured; canonical payable lifecycle evidence is recorded above.
 - Full release script: structural checks passed
 

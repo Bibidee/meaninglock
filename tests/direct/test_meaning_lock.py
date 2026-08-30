@@ -178,6 +178,56 @@ def test_draft_activation_freezes_covenant_and_draft_can_cancel(direct_vm, direc
         contract.cancel_before_challenge(draft, "too late")
 
 
+def test_funded_draft_can_cancel_and_refund_publisher(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """A funded, never-activated draft has a deterministic publisher refund path."""
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 100
+    draft = contract.register_covenant(
+        "cancel-me", "https://live.example", "https://baseline.example", "",
+        "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2",
+        "Keep the published terms", "terms", direct_bob, 2000000000
+    )
+    assert contract.get_status(draft)[0] == 0
+    assert contract.publisher_bond[draft] == 100
+    assert contract.escrow[draft] == 100
+
+    contract.cancel_before_challenge(draft, "publisher cancellation")
+
+    status = contract.get_status(draft)
+    assert status[0] == 4 and status[1] == 5 and status[4] == 0
+    assert contract.publisher_bond[draft] == 0
+    assert contract.challenger_bond[draft] == 0
+    assert contract.escrow[draft] == 0
+    assert contract.paid[draft] is True
+    assert contract.note[draft] == "publisher cancellation"
+    assert contract.is_claimable(draft) is False
+    assert contract.get_payout(draft) == (True, direct_alice, 100, "publisher cancellation")
+    assert contract.get_payout_totals(draft) == (100, 100, 0, 0)
+
+
+def test_expired_unactivated_draft_can_still_refund_publisher(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Expiry must not strand a publisher who never activated their draft."""
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 100
+    draft = contract.register_covenant(
+        "expired-draft", "https://live.example", "https://baseline.example", "",
+        "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2",
+        "Keep the published terms", "terms", direct_bob, 2000000000
+    )
+    direct_vm.warp("2040-01-01T00:00:00Z")
+    contract.cancel_before_challenge(draft, "expired draft refund")
+
+    status = contract.get_status(draft)
+    assert status[0] == 4 and status[1] == 5 and status[4] == 0
+    assert contract.publisher_bond[draft] == 0
+    assert contract.challenger_bond[draft] == 0
+    assert contract.escrow[draft] == 0
+    assert contract.paid[draft] is True
+    assert contract.get_payout_totals(draft) == (100, 100, 0, 0)
+
+
 def test_all_material_draft_setters_freeze_at_activation(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     direct_vm.sender = direct_alice
