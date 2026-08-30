@@ -474,7 +474,12 @@ class MeaningLock(gl.Contract):
             if not isinstance(leader_result,gl.vm.Return): return False
             mine=self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason)
             theirs=leader_result.calldata
-            return mine["outcome"]==theirs["outcome"] and mine["impact"]==theirs["impact"] and mine["confidence"]==theirs["confidence"] and mine["mask"]==theirs["mask"]
+            # Equivalence is semantic at the covenant boundary: validators may
+            # differ on confidence, impact, or topic mask while independently
+            # deriving the same policy verdict. Requiring byte-identical
+            # metadata caused needless MAJORITY_DISAGREE results for preserved
+            # evidence. The deterministic policy reducer remains authoritative.
+            return self._derive_for_covenant(covenant_id,mine)==self._derive_for_covenant(covenant_id,theirs)
         record=gl.vm.run_nondet_unsafe(leader_fn,validator_fn)
         record=self._normalize_record(record)
         final=self._derive_for_covenant(covenant_id,record)
