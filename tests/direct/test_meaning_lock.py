@@ -158,11 +158,31 @@ def test_registration_binds_baseline_digest_and_rejects_role_collision(direct_vm
     direct_vm.sender = direct_alice
     direct_vm.value = 100
     with direct_vm.expect_revert("publisher and beneficiary must differ"):
-        contract.register_covenant("bad", "https://live.example", "https://baseline.example", "", "0" * 64, "terms", "topics", direct_alice, 2000000000)
+        contract.register_covenant("bad", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2", "terms", "topics", direct_alice, 2000000000)
     covenant = _register(contract, direct_vm, direct_alice, direct_bob)
-    assert contract.baseline_digest[covenant] == "0" * 64
+    assert contract.baseline_digest[covenant] == "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2"
     with direct_vm.expect_revert("digest must be 64 hex characters"):
         contract.update_baseline_reference(covenant, "https://new-baseline.example", "", "bad")
+
+
+def test_draft_activation_freezes_covenant_and_draft_can_cancel(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 100
+    draft = contract.register_covenant("draft", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2", "terms", "topics", direct_bob, 2000000000)
+    assert contract.get_status(draft)[0] == 0
+    contract.activate_covenant(draft)
+    assert contract.get_status(draft)[0] == 1
+    with direct_vm.expect_revert("cancellation disabled after activation"):
+        contract.cancel_before_challenge(draft, "too late")
+
+
+def test_baseline_commitment_mismatch_is_safe_unverifiable(direct_vm, direct_deploy):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.mock_web(r"https://.*", {"status": 200, "body": "changed baseline"})
+    direct_vm.mock_llm(r".*SYSTEM RULES: classify only material covenant meaning.*", '{"outcome":"PRESERVED","impact":"NONE","confidence":"HIGH","mask":"0"}')
+    record = contract._evidence("https://live.example", "https://baseline.example", "", "https://evidence.example", "", "Keep terms", "terms", "review", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2")
+    assert record["outcome"] == 4
 
 
 def test_source_refresh_is_delayed_and_challenge_cancels_pending_migration(direct_vm, direct_deploy, direct_alice, direct_bob):
@@ -184,7 +204,7 @@ def test_cancellation_cannot_race_live_participation(direct_vm, direct_deploy, d
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     covenant = _register(contract, direct_vm, direct_alice, direct_bob)
     direct_vm.sender = direct_alice
-    with direct_vm.expect_revert("cancellation disabled after covenant registration"):
+    with direct_vm.expect_revert("cancellation disabled after activation"):
         contract.cancel_before_challenge(covenant, "publisher changed mind")
 
 
@@ -199,10 +219,12 @@ def test_prompt_injection_evidence_is_data_only(direct_vm, direct_deploy):
 def _register(contract, vm, publisher, beneficiary, expires=2000000000):
     vm.sender = publisher
     vm.value = 100
-    return contract.register_covenant(
-        "demo", "https://live.example", "https://baseline.example", "", "0" * 64,
+    covenant = contract.register_covenant(
+        "demo", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2",
         "Keep the published terms", "terms", beneficiary, expires
     )
+    contract.activate_covenant(covenant)
+    return covenant
 
 
 def _mock_verdict(vm, outcome):

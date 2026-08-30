@@ -2,13 +2,12 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
-The final replacement deployment below is canonical. All writes finalized
-successfully; semantic verification reached a safe `UNVERIFIABLE` result because
-the public evidence did not meet validator confidence requirements. This is
-valid lifecycle evidence, but not a preferred clean `PRESERVED` presentation.
+**Pending fresh deployment.** Source changed in the final hardening pass, so the
+previous canonical address is historical evidence only. A new deployment and
+Explorer parity check are required before submission.
 
 - Network: GenLayer Studio Network
-- Address: `0xE1f8896417a424543A75B4fDa6cDdc553C31184E`
+- Address: `0xE1f8896417a424543A75B4fDa6cDdc553C31184E` (superseded)
 - Deployment transaction: `0x3a563e004e5e9fd5011de0d55d31067a5f2c9412b990f3ea5ee71777778dd277`
 - Updated source commit: `441abd130653efafe69262b1e917532afd4a6055`
 - Updated contract SHA-256: `909C15B5DFF5ECF66FC4936BD621B4AA7A61B3F22F42B969CED70F94C8FECC7C`
@@ -18,7 +17,7 @@ valid lifecycle evidence, but not a preferred clean `PRESERVED` presentation.
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed byte-equivalent after line-ending normalization.
 
-## FINAL CANONICAL PAYABLE LIFECYCLE PROOF
+## PRIOR PAYABLE LIFECYCLE PROOF (SUPERSEDED SOURCE)
 
 - Covenant ID: `1`
 - Publisher: `0x3506660bF99b7517e941ae6CAEF16DCa2428d691`

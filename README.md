@@ -17,23 +17,25 @@ settlement, alter payout amounts, bypass appeals, or change escrow accounting.
 
 The implementation separates registration and frozen terms, multimodal evidence acquisition, round-based challenge/appeal/recovery transitions, and deterministic escrow settlement with append-only audit records. Publisher collateral and challenger collateral are tracked independently; terminal actions can only return each component to its owner or route the publisher security deposit to the beneficiary after final adverse settlement. Adverse principal uses the configured publisher/beneficiary/challenger basis-point split (exactly 10,000 bps), with deterministic remainder allocation.
 
-Registration stores an explicit 64-hex baseline commitment alongside the immutable
-statement/topics and baseline reference. A pre-participation baseline update must
-replace the reference and commitment atomically; after the first challenge the
-baseline is frozen. Publisher/beneficiary identities must differ, while payout
+Registration stores a non-zero 64-hex SHA-256 commitment alongside the immutable
+statement/topics and baseline reference. During each review validators hash the
+fetched baseline text and a mismatch, unavailable artifact, or malformed digest
+can only yield `UNVERIFIABLE`; new baseline material is never silently substituted.
+A pre-activation baseline update must replace the reference and commitment
+atomically; after activation the baseline is frozen. Publisher/beneficiary identities must differ, while payout
 roles are explicit so address overlap cannot corrupt accounting.
 
 Live-source changes are delayed migrations: the old URL remains the adjudicated
 source during the challenge window, every activated version is append-only in
 source history, and a pending migration is cancelled when participation begins.
-Cancellation is disabled after registration, removing the publisher cancellation
-race against prospective challengers. Evidence is always delimited as untrusted
+Cancellation is available only during `DRAFT`; `activate_covenant()` freezes all
+economically material configuration before monitoring begins. Evidence is always delimited as untrusted
 data in the adjudication prompt, including page text, screenshots, and challenge
 references.
 
 ## Lifecycle
 
-`ACTIVE → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
+`DRAFT → ACTIVE (frozen) → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
 Uncontested expiry is claimable by the publisher. Preserved reviews do not terminate monitoring. Appeals replace the canonical evidence context and keep adverse settlement locked until the appeal deadline.
 
 Pending review state always takes precedence over historical verdict state: a
@@ -41,7 +43,7 @@ previous `PRESERVED` verdict cannot authorize expiry settlement while a later
 challenge or appeal is pending. Adverse settlement is permissionless after
 finality; the contract, not the caller, determines recipients and amounts.
 
-Payout uses one `_send_gen` helper for checks-effects-interactions. It debits an explicit source bucket, records each partial transfer in the audit log, and closes only when all outstanding escrow reaches zero. No transfer mode is assumed beyond the current GenLayer payable-message API.
+Payout uses one `_send_gen` helper for checks-effects-interactions. It debits an explicit source bucket, records each partial transfer in the audit log, and closes only when all outstanding escrow reaches zero. GenLayer transfer emission is asynchronous: internal settlement accounting is authoritative, while recipient delivery remains dependent on the network's payable-message handling; the contract does not claim an unsupported retry callback.
 
 ### Review finality
 

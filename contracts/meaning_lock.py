@@ -5,6 +5,7 @@ Only this file is deployable. Tests are deliberately not contract neighbours.
 """
 from genlayer import *
 from datetime import datetime, timezone
+from hashlib import sha256
 
 MAX_LABEL_CHARS=128
 MAX_STATEMENT_CHARS=4000
@@ -34,6 +35,7 @@ ACTIVE=u256(1)
 PENDING=u256(2)
 RESOLVED=u256(3)
 CLOSED=u256(4)
+DRAFT=u256(0)
 LOW=u256(0)
 MEDIUM=u256(1)
 HIGH=u256(2)
@@ -246,7 +248,9 @@ class MeaningLock(gl.Contract):
         self.statement[i]=statement
         self.topics[i]=topics
         self.label[i]=label
-        self.state[i]=ACTIVE
+        # Registration creates a funded draft.  Economic terms are editable
+        # only until the publisher explicitly freezes the covenant.
+        self.state[i]=DRAFT
         self.verdict[i]=NONE
         self.impact[i]=NO_IMPACT
         self.confidence[i]=LOW
@@ -294,6 +298,19 @@ class MeaningLock(gl.Contract):
         self.audit_count[i]=u256(0)
         self._audit(i,"REGISTER",gl.message.sender_address,"covenant created")
         return i
+
+    @gl.public.write
+    def activate_covenant(self, covenant_id: u256) -> None:
+        """Freeze all draft configuration and begin the enforceable lifecycle."""
+        self._known(covenant_id)
+        self._publisher(covenant_id)
+        if self.state[covenant_id] != DRAFT:
+            raise gl.vm.UserError("covenant already activated")
+        if self._now() >= self.expires_at[covenant_id]:
+            raise gl.vm.UserError("expiry must be future")
+        self.state[covenant_id] = ACTIVE
+        self.note[covenant_id] = "active and frozen"
+        self._audit(covenant_id, "ACTIVATED", gl.message.sender_address, "draft configuration frozen")
 
     @gl.public.write.payable
     def add_bond(self, covenant_id: u256, role: u256) -> None:
@@ -518,6 +535,7 @@ class MeaningLock(gl.Contract):
         permitted_impact=self.permitted_impact[covenant_id]
         visual_required=self.visual_required[covenant_id]
         fallback_allowed=self.fallback_allowed[covenant_id]
+        baseline_commitment=self.baseline_digest[covenant_id]
         def reduce(record):
             if not isinstance(record, dict): return UNVERIFIABLE
             for key in ("outcome", "impact", "confidence", "mask"):
@@ -533,10 +551,10 @@ class MeaningLock(gl.Contract):
             if visual_required and base_image == "": return UNVERIFIABLE
             if not fallback_allowed and record["outcome"] == UNVERIFIABLE: return UNVERIFIABLE
             return self._derive(record)
-        def leader_fn(): return self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason)
+        def leader_fn(): return self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason,baseline_commitment)
         def validator_fn(leader_result) -> bool:
             if not isinstance(leader_result,gl.vm.Return): return False
-            mine=self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason)
+            mine=self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason,baseline_commitment)
             theirs=leader_result.calldata
             # Equivalence is semantic at the covenant boundary: validators may
             # differ on confidence, impact, or topic mask while independently
@@ -592,11 +610,20 @@ class MeaningLock(gl.Contract):
         self._audit(covenant_id,"VERIFIED",gl.message.sender_address,self._verdict_name(final))
         return final
 
-    def _evidence(self, live: str, base: str, base_image: str, extra: str, extra_image: str, statement: str, topics: str, reason: str):
+    def _evidence(self, live: str, base: str, base_image: str, extra: str, extra_image: str, statement: str, topics: str, reason: str, baseline_commitment: str = ""):
         """Web fetch, rendered access and visual analysis
         only categories leave it."""
         live_text=gl.nondet.web.render(live,mode="text")
         base_text=gl.nondet.web.render(base,mode="text")
+        # Bind the semantic review to the exact baseline artifact committed at
+        # registration.  A changed, unavailable, or malformed baseline can
+        # only produce the safe UNVERIFIABLE result.
+        if baseline_commitment != "":
+            try:
+                if sha256(base_text.encode("utf-8")).hexdigest() != baseline_commitment.lower():
+                    return {"outcome":UNVERIFIABLE,"impact":NO_IMPACT,"confidence":LOW,"mask":u256(0)}
+            except:
+                return {"outcome":UNVERIFIABLE,"impact":NO_IMPACT,"confidence":LOW,"mask":u256(0)}
         images=[gl.nondet.web.render(live,mode="screenshot")]
         if base_image!="": images.append(gl.nondet.web.render(base_image,mode="screenshot"))
         if extra_image!="": images.append(gl.nondet.web.render(extra_image,mode="screenshot"))
@@ -732,7 +759,15 @@ class MeaningLock(gl.Contract):
 
     @gl.public.write
     def cancel_before_challenge(self,covenant_id:u256,reason:str)->None:
-        raise gl.vm.UserError("cancellation disabled after covenant registration")
+        self._known(covenant_id)
+        self._publisher(covenant_id)
+        if self.state[covenant_id] != DRAFT or self.round[covenant_id] != u256(0):
+            raise gl.vm.UserError("cancellation disabled after activation")
+        self._text(reason, "cancellation reason")
+        self._send_gen(covenant_id, self.publisher[covenant_id], self.publisher_bond[covenant_id], "draft cancellation", u256(1), ROLE_PUBLISHER)
+        self.state[covenant_id] = CLOSED
+        self.verdict[covenant_id] = CANCELLED
+        self.note[covenant_id] = reason
 
     def _send_gen(self,covenant_id:u256,recipient:Address,amount:u256,note:str,source:u256=u256(1),role:u256=ROLE_PUBLISHER)->None:
         """The only transfer emission: zero ledger and mark paid before emit."""
@@ -1081,6 +1116,7 @@ class MeaningLock(gl.Contract):
         if len(value)!=64: raise gl.vm.UserError("digest must be 64 hex characters")
         for ch in value.lower():
             if ch not in "0123456789abcdef": raise gl.vm.UserError("digest must be hex")
+        if value.lower() == "0" * 64: raise gl.vm.UserError("digest cannot be zero")
 
     def _assert_round_is_open(self, covenant_id: u256) -> None:
         if not self._state_allows_evidence(covenant_id):

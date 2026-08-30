@@ -17,6 +17,18 @@
     "kwparams": {}
   },
   "methods": {
+    "activate_covenant": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
     "activate_live_source": {
       "params": [
         [

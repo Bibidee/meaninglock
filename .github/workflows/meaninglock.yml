@@ -1,0 +1,26 @@
+name: MeaningLock validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned tooling
+        run: python -m pip install -r requirements-dev.txt
+      - name: GenVM lint
+        run: genvm-lint check contracts/meaning_lock.py
+      - name: GenVM validate
+        run: genvm-lint validate contracts/meaning_lock.py
+      - name: GenVM schema
+        run: genvm-lint schema contracts/meaning_lock.py --output evidence/meaning_lock.schema.json
+      - name: GenVM typecheck
+        run: genvm-lint typecheck contracts/meaning_lock.py
+      - name: Direct Mode tests
+        run: gltest tests/direct -q
