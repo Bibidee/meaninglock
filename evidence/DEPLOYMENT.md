@@ -20,7 +20,8 @@ Its complete payable lifecycle proof is finalized and source-matched.
 - Challenger bond: returned/resolved (`0` remaining); publisher bond: locked (`1000000000000000000` remaining)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed against the frozen source commit and SHA-256 above.
-- CI: successful workflow run `33335769224` on final HEAD; Direct Mode `35 passed, 2 skipped`.
+- CI: GitHub Actions validation passes on main, including GenVM lint, validate,
+  schema, typecheck, and Direct Mode. Direct Mode result: `35 passed, 2 skipped`.
 
 ## SUPERSEDED CORRECTED-SOURCE DEPLOYMENT
 
@@ -59,7 +60,7 @@ source. It is not the canonical submission address.
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed; Explorer exposes the final source and 48-method ABI.
 
-## FINAL PAYABLE LIFECYCLE PROOF
+## HISTORICAL PAYABLE LIFECYCLE PROOF (SUPERSEDED DEPLOYMENT)
 
 - Covenant ID: `1`
 - Publisher: `0x3506660bF99b7517e941ae6CAEF16DCa2428d691`
@@ -70,7 +71,7 @@ source. It is not the canonical submission address.
 - Verification transaction: `0x19be2a691d10d7f2758c78e9505f7b584a540b4eece5a7dedcce3e198e282896` — `FINALIZED`, `SUCCESS`
 - Verification consensus: `Accepted`; deterministic result `UNVERIFIABLE` (baseline commitment mismatch safely prevented a trusted verdict)
 - Final read: `RESOLVED`, verdict `UNVERIFIABLE`, review type `ROUND_NONE`, escrow `2000000000000000000`
-- No failed user-initiated writes exist on this canonical address.
+- No failed user-initiated writes exist on this historical deployment.
 
 ## FAILED REPLACEMENT ATTEMPTS (NOT CANONICAL)
 
@@ -118,14 +119,12 @@ registration, challenge, and verification transactions. Internal validator
 `ERROR`/`idle` diagnostics were present in the consensus receipt but did not
 prevent final `MAJORITY_AGREE` or mutate the transaction outcome.
 
-## LIVE-EVIDENCE LIMITATIONS (CURRENT PASS)
+## LIVE-EVIDENCE LIMITATIONS (HISTORICAL)
 
-The canonical deployment has a successful semantic verification, but that
-verification safely resolved `UNVERIFIABLE` because the supplied baseline
-commitment did not match the rendered remote document. A follow-up attempt to
-register a second covenant was rejected by Studio before contract execution:
-its schema runner loaded an unrelated stale `ClaimVerifier` artifact. No
-transaction hash was created by that attempt, and no retry was issued.
+Earlier superseded deployments included an `UNVERIFIABLE` result and an
+aborted Studio setup attempt. Those records are retained for audit history;
+the canonical deployment above has the successful `ACTIVE/PRESERVED/ROUND_NONE`
+proof.
 
 The repository's Direct Mode suite remains the authoritative executable proof
 for adverse settlement, appeal finality, timeout recovery, repeated preserved
