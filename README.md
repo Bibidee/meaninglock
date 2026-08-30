@@ -13,6 +13,11 @@ The implementation separates registration and frozen terms, multimodal evidence 
 `ACTIVE → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
 Uncontested expiry is claimable by the publisher. Preserved reviews do not terminate monitoring. Appeals replace the canonical evidence context and keep adverse settlement locked until the appeal deadline.
 
+Pending review state always takes precedence over historical verdict state: a
+previous `PRESERVED` verdict cannot authorize expiry settlement while a later
+challenge or appeal is pending. Adverse settlement is permissionless after
+finality; the contract, not the caller, determines recipients and amounts.
+
 Payout uses one `_send_gen` helper for checks-effects-interactions. It debits an explicit source bucket, records each partial transfer in the audit log, and closes only when all outstanding escrow reaches zero. No transfer mode is assumed beyond the current GenLayer payable-message API.
 
 ### Review finality

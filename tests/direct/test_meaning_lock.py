@@ -218,6 +218,29 @@ def test_repeated_preserved_rounds_refund_each_challenger(direct_vm, direct_depl
         direct_vm.clear_mocks()
 
 
+def test_pending_repeat_challenge_blocks_preserved_expiry_claim(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob, expires=2000000000)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "round one", "https://evidence.example", "")
+    _mock_verdict(direct_vm, "PRESERVED")
+    assert contract.verify(covenant) == 1
+    direct_vm.clear_mocks()
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "round two", "https://evidence.example", "")
+    assert contract.get_status(covenant)[0] == 2
+    assert contract.get_review_type(covenant) == 1
+    direct_vm.warp("2034-01-01T00:00:00Z")
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("preserved expiry unavailable"):
+        contract.claim_preserved_expiry(covenant)
+    contract.recover_timed_out_challenge(covenant)
+    assert contract.get_status(covenant)[0] == 4
+    assert contract.get_status(covenant)[4] == 0
+
+
 def test_audit_cap_does_not_block_adverse_settlement(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)

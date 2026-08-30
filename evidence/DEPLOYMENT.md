@@ -104,6 +104,37 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 
 ## Final closure deployment
 
+### Final expiry/finality closure deployment (current)
+
+- Contract address: `0x0894953D7d3abf45Eb28713a0d03eb587ae20aDA`
+- Deployment transaction: `0x599024dc9bf5826be493da0cb823220e15e0968b6ce90899f405c8effbdb7c1f`
+- Contract-source commit: `0616d8bb550ecb46a075d102dc356429306599c4`
+- Source SHA-256: `4E92A2AB061873E9E5DA63625727385A5BD372ED689A192A26E1B0CD7895E9C3`
+- Constructor parameters: `1000000000000000000, 86400, 86400`
+- Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
+- Schema: 44 methods (24 views, 20 writes)
+- Protocol: `[false, '1000000000000000000', 86400, 86400]`
+- Explorer/source parity: confirmed byte-identical after transport line-ending normalization.
+
+This deployment supersedes `0x4ff0a1C8c240E8685cDe19491BA2F04B21a21C48`.
+
+### Final canonical payable lifecycle proof
+
+- Registration: `0xcda31aaabc7808d906e58e4b01b65e273cc2b211850344ee2e0910485c1468b5`
+  — covenant `1`, publisher bond 1 GEN, finalized `MAJORITY_AGREE`.
+- Registration read: `get_status(1) = [1,0,0,0,"1000000000000000000"]`,
+  `get_review_type(1) = 0`.
+- Challenge: `0xeb7f249a77f2ddfc947ce085a1c224bd9ad729350d85166724efd7dfb051072e`
+  — distinct challenger, 1 GEN, finalized. Readback:
+  `get_status(1) = [2,0,0,0,"2000000000000000000"]`,
+  `get_review_type(1) = 1`.
+- Verification: `0x503ecae8013d2d8817c22d0c2e6e0ad5e7f84308638eb88699a02b6d97236cdf`
+  — finalized `MAJORITY_AGREE`.
+- Final readback: `get_status(1) = [1,1,0,2,"1000000000000000000"]`,
+  `get_review_type(1) = 0`, with no active challenge or appeal. The preserved
+  result refunded challenger collateral while publisher principal remained
+  locked.
+
 ### Terminal-state closure deployment (current)
 
 - Contract address: `0x4ff0a1C8c240E8685cDe19491BA2F04B21a21C48`

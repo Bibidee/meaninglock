@@ -584,11 +584,10 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def claim_adverse(self,covenant_id:u256)->None:
         self._known(covenant_id)
-        self._beneficiary(covenant_id)
         if self.state[covenant_id] != RESOLVED or self.review_type[covenant_id] != ROUND_NONE: raise gl.vm.UserError("resolved review required")
         if self.verdict[covenant_id]!=CHANGED and self.verdict[covenant_id]!=REMOVED: raise gl.vm.UserError("adverse verdict required")
         if self.appeal_deadline[covenant_id] != u256(0) and self._deadline_is_open(self.appeal_deadline[covenant_id]): raise gl.vm.UserError("appeal window still open")
-        self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"beneficiary claimed adverse verdict")
+        self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"permissionless adverse settlement")
         principal=self.publisher_bond[covenant_id]
         publisher_share=self._basis_points_amount(principal,self.settlement_publisher_bps[covenant_id])
         beneficiary_share=self._basis_points_amount(principal,self.settlement_beneficiary_bps[covenant_id])
@@ -610,7 +609,7 @@ class MeaningLock(gl.Contract):
     def claim_preserved_expiry(self,covenant_id:u256)->None:
         self._known(covenant_id)
         self._publisher(covenant_id)
-        if self.verdict[covenant_id]!=PRESERVED or self._now()<self.expires_at[covenant_id]: raise gl.vm.UserError("preserved expiry required")
+        if self.state[covenant_id]!=ACTIVE or self.review_type[covenant_id]!=ROUND_NONE or self.verdict[covenant_id]!=PRESERVED or self.challenger_bond[covenant_id]!=u256(0) or self.challenge_deadline[covenant_id]!=u256(0) or self._now()<self.expires_at[covenant_id]: raise gl.vm.UserError("preserved expiry unavailable")
         self.verdict[covenant_id]=EXPIRED
         self._audit(covenant_id,"CLAIM_REQUESTED",gl.message.sender_address,"publisher claimed preserved expiry")
         self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"preserved expiry")
