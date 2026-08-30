@@ -45,6 +45,12 @@ escrow components afterward. Registered covenants snapshot the challenge and
 recovery windows, so owner changes affect future covenants only. The bounded
 audit store stops recording at its cap without reverting economic exit paths.
 
+The appeal limit is covenant-lifetime scoped: `appeal_count` is monotonic and
+does not reset when monitoring resumes after a successful appeal. While a
+covenant is `ACTIVE`, the publisher may refresh the monitored live URL; each
+publisher-authorized update increments `source_version` and is audit-recorded.
+The baseline and frozen covenant semantics remain governed separately.
+
 ## Layout
 
 - `contracts/meaning_lock.py` is the only deployable source.
@@ -64,7 +70,7 @@ powershell -ExecutionPolicy Bypass -File scripts/release_check.ps1
 
 No deploy command is included. Publish the exact same source to Explorer after the full release checklist passes. A fresh deployment is required whenever `contracts/meaning_lock.py` changes; historical deployment addresses are evidence only.
 
-The Studio deployment history and current closure deployment are in
-`evidence/DEPLOYMENT.md`. Historical addresses are explicitly superseded; use
-only the fresh address recorded in the closure section after independently
-checking Explorer source parity.
+The Studio deployment history and canonical deployment evidence are in
+`evidence/DEPLOYMENT.md`. Historical addresses are explicitly marked
+`SUPERSEDED`; use only the address in its `CURRENT CANONICAL DEPLOYMENT`
+section after checking Explorer source parity.

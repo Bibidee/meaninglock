@@ -25,7 +25,8 @@ All transactions below are on the canonical address above.
 - Challenge transaction: `0x0fb374f1ce0650c90411a6eee854f9dc96e822d8746e42bae10d258d18b757b0`
 - Challenge read: `PENDING`, review type `ROUND_CHALLENGE`, escrow `2000000000000000000`
 - Verification transaction: `0xc7f73d1b5da75c133433eb3965656a547395e7402184aa0f5e3eda495d9c8907`
-- Verification consensus: `MAJORITY_AGREE` (result `6`)
+- Verification consensus: `MAJORITY_AGREE`
+- Final verdict: `PRESERVED`
 - Final read: `ACTIVE`, verdict `PRESERVED`, review type `ROUND_NONE`, escrow `1000000000000000000`
 - Challenger bond was resolved and publisher principal remained locked.
 
@@ -37,6 +38,16 @@ All transactions below are on the canonical address above.
 - `genvm-lint typecheck`: no type errors
 - Direct Mode: 20 passed, 2 skipped
 - Full release script: structural checks passed
+
+## EXPLORER ERROR REVIEW
+
+The first payable-proof retry on this deployment used covenant `1` and ended
+with transaction `0x9dc40e4c69d9575d9ecc36e9d85109e51fe1eae84bf6926c5da229a5ece34ff7`.
+The resulting read was `RESOLVED + UNVERIFIABLE + ROUND_NONE` with escrow still
+`2 GEN`; no payout occurred. The available receipt does not conclusively prove
+whether this was validator disagreement or unavailable evidence, so it is not
+labelled intentional. It is historical test state and is excluded from the
+canonical payable proof, which uses covenant `2`.
 
 ## SUPERSEDED DEPLOYMENTS
 
