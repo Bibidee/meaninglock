@@ -58,3 +58,6 @@ The following addresses are historical and must not be used as the submission ad
 - `0x45CA69FdF8C98839398Af62c0Fb2B690A4b9da81` — initial historical deployment.
 - `0x05d6b9821473C103A183652F46fA34EdD69999dD` — superseded closure deployment.
 - `0x0eF33abd47Acf477Ec45fD317A8091516CF4CA54` — superseded settlement deployment.
+- `0x1a8161F5f593b73536cbef75a3569ff71a2D7406` — superseded; challenge receipt rolled back as `inactive or expired`.
+- `0x120Cf583bC1f563Af0686B3aDbF8f90b85fd64A0` — superseded; verification finalized `MAJORITY_DISAGREE` / `UNVERIFIABLE`.
+- `0xc7754290690596D4e0Ba8b6E453A2cDc718fcfB2` — superseded; verification finalized `MAJORITY_DISAGREE` and remained pending.
