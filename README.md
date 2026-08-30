@@ -17,6 +17,20 @@ settlement, alter payout amounts, bypass appeals, or change escrow accounting.
 
 The implementation separates registration and frozen terms, multimodal evidence acquisition, round-based challenge/appeal/recovery transitions, and deterministic escrow settlement with append-only audit records. Publisher collateral and challenger collateral are tracked independently; terminal actions can only return each component to its owner or route the publisher security deposit to the beneficiary after final adverse settlement. Adverse principal uses the configured publisher/beneficiary/challenger basis-point split (exactly 10,000 bps), with deterministic remainder allocation.
 
+Registration stores an explicit 64-hex baseline commitment alongside the immutable
+statement/topics and baseline reference. A pre-participation baseline update must
+replace the reference and commitment atomically; after the first challenge the
+baseline is frozen. Publisher/beneficiary identities must differ, while payout
+roles are explicit so address overlap cannot corrupt accounting.
+
+Live-source changes are delayed migrations: the old URL remains the adjudicated
+source during the challenge window, every activated version is append-only in
+source history, and a pending migration is cancelled when participation begins.
+Cancellation is disabled after registration, removing the publisher cancellation
+race against prospective challengers. Evidence is always delimited as untrusted
+data in the adjudication prompt, including page text, screenshots, and challenge
+references.
+
 ## Lifecycle
 
 `ACTIVE → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
@@ -55,10 +69,11 @@ recovery windows, so owner changes affect future covenants only. The bounded
 audit store stops recording at its cap without reverting economic exit paths.
 
 The appeal limit is covenant-lifetime scoped: `appeal_count` is monotonic and
-does not reset when monitoring resumes after a successful appeal. While a
-covenant is `ACTIVE`, the publisher may refresh the monitored live URL; each
-publisher-authorized update increments `source_version` and is audit-recorded.
-The baseline and frozen covenant semantics remain governed separately.
+does not reset when monitoring resumes after a successful appeal. Live-source
+refreshes are delayed migrations: the prior URL remains active during the
+challenge window, activated versions are append-only in source history, and a
+pending migration is cancelled when participation begins. The baseline and
+frozen covenant semantics remain governed separately.
 
 ## Layout
 

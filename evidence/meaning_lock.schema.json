@@ -17,6 +17,18 @@
     "kwparams": {}
   },
   "methods": {
+    "activate_live_source": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "null",
+      "payable": false
+    },
     "add_bond": {
       "params": [
         [
@@ -226,6 +238,17 @@
         "int",
         "string"
       ]
+    },
+    "get_baseline_commitment": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "string"
     },
     "get_covenant_windows": {
       "params": [
@@ -467,6 +490,24 @@
         "int"
       ]
     },
+    "get_source_history_entry": {
+      "params": [
+        [
+          "covenant_id",
+          "int"
+        ],
+        [
+          "version",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": [
+        "string",
+        "int"
+      ]
+    },
     "get_source_version": {
       "params": [
         [
@@ -599,6 +640,10 @@
           "string"
         ],
         [
+          "baseline_digest",
+          "string"
+        ],
+        [
           "statement",
           "string"
         ],
@@ -700,6 +745,10 @@
         ],
         [
           "image_url",
+          "string"
+        ],
+        [
+          "baseline_digest",
           "string"
         ]
       ],
