@@ -104,6 +104,22 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 
 ## Final closure deployment
 
+### Terminal-state closure deployment (current)
+
+- Contract address: `0x4ff0a1C8c240E8685cDe19491BA2F04B21a21C48`
+- Deployment transaction: `0x41bf7108d5d217f6a6102a863f6d86bd9fbfeeecd29899415e95e210ba92eb90`
+- Constructor parameters: `1000000000000000000, 86400, 86400`
+- Constructor consensus: `MAJORITY_AGREE`, transaction `ACCEPTED`
+- Source SHA-256: `668800422EFE8B64D5A0ACCFF07D59B92CCD049EB5117562D5F93E86E8437FFE`
+- Schema extraction: successful (44 methods, 24 views, 20 writes)
+- Protocol read: `[false, '1000000000000000000', 86400, 86400]`
+- Explorer/source parity: confirmed byte-for-byte after transport line-ending normalization.
+- Source length: 1,319 physical lines.
+
+This is the sole canonical submission address. It supersedes
+`0xFe25f083c550268bd7e164EECe218F73f66b3E18` because the terminal-state
+closure source changed.
+
 The deployment below supersedes every earlier address in this file and is the
 only address that matches the final closure source:
 

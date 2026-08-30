@@ -83,3 +83,53 @@ def test_multimodal_evidence_uses_mocked_render_and_json_llm(direct_vm, direct_d
     )
     assert record["outcome"] == 1  # PRESERVED
     assert record["confidence"] == 2  # HIGH
+
+
+def _register(contract, vm, publisher, beneficiary, expires=2000000000):
+    vm.sender = publisher
+    vm.value = 100
+    return contract.register_covenant(
+        "demo", "https://live.example", "https://baseline.example", "",
+        "Keep the published terms", "terms", beneficiary, expires
+    )
+
+
+def _mock_verdict(vm, outcome):
+    vm.mock_web(r"https://.*", {"status": 200, "body": "covenant evidence"})
+    vm.mock_llm(r".*Classify only material covenant meaning.*", '{"outcome":"%s","impact":"MATERIAL","confidence":"HIGH","mask":"1"}' % outcome)
+
+
+def test_adverse_review_clears_round_and_blocks_claim_until_appeal_ends(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "terms changed", "https://evidence.example", "")
+    _mock_verdict(direct_vm, "MATERIAL_CHANGE")
+    assert contract.verify(covenant) == 2
+    assert contract.get_review_type(covenant) == 0
+    assert contract.get_status(covenant)[0] == 3
+    with direct_vm.expect_revert("appeal window still open"):
+        contract.claim_adverse(covenant)
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    # The covenant expiry is intentionally far enough away for the appeal
+    # grace period to elapse while the covenant remains live.
+    assert contract.is_claimable(covenant) is True
+
+
+def test_unverifiable_review_requires_deadline_then_recovers(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "evidence unavailable", "https://evidence.example", "")
+    _mock_verdict(direct_vm, "UNVERIFIABLE")
+    assert contract.verify(covenant) == 4
+    assert contract.get_review_type(covenant) == 0
+    assert contract.get_status(covenant)[0] == 3
+    with direct_vm.expect_revert("unverifiable recovery unavailable"):
+        contract.recover_unverifiable(covenant)
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    contract.recover_unverifiable(covenant)
+    assert contract.get_status(covenant)[0] == 4
+    assert contract.get_status(covenant)[4] == 0

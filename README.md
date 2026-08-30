@@ -15,6 +15,29 @@ Uncontested expiry is claimable by the publisher. Preserved reviews do not termi
 
 Payout uses one `_send_gen` helper for checks-effects-interactions. It debits an explicit source bucket, records each partial transfer in the audit log, and closes only when all outstanding escrow reaches zero. No transfer mode is assumed beyond the current GenLayer payable-message API.
 
+### Review finality
+
+Each covenant exposes an explicit review type: `ROUND_NONE` (no active
+review), `ROUND_CHALLENGE` (ordinary challenge), or `ROUND_APPEAL` (bounded
+appeal). Completed verification always returns to `ROUND_NONE`. A preserved
+ordinary review refunds challenger collateral and resumes `ACTIVE`; an adverse
+review becomes `RESOLVED`, keeps an appeal grace period, and can settle only
+after that period. An ordinary challenge timeout resolves only that review and
+returns monitoring to `ACTIVE` while the publisher principal remains locked.
+
+Appeal verification can overturn an adverse result, retain an adverse result,
+or restore the prior adverse result when appeal evidence is unverifiable. Once
+`MAX_APPEALS` is reached no unusable extra appeal window is created. An appeal
+timeout restores the saved pre-appeal adverse verdict and leaves settlement
+available after finality.
+
+`UNVERIFIABLE` is a completed ordinary review result only when the validators
+cannot support a safe category. It enters `RESOLVED + ROUND_NONE` with a
+recovery deadline; recovery is blocked before that deadline and returns both
+escrow components afterward. Registered covenants snapshot the challenge and
+recovery windows, so owner changes affect future covenants only. The bounded
+audit store stops recording at its cap without reverting economic exit paths.
+
 ## Layout
 
 - `contracts/meaning_lock.py` is the only deployable source.

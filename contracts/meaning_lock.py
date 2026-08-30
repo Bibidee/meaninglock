@@ -460,6 +460,7 @@ class MeaningLock(gl.Contract):
         self._known(covenant_id)
         if self.state[covenant_id]!=PENDING: raise gl.vm.UserError("pending challenge required")
         if self._now()>self.challenge_deadline[covenant_id]: raise gl.vm.UserError("challenge timed out")
+        current_review = self.review_type[covenant_id]
         live=self.live_url[covenant_id]
         base=self.baseline_url[covenant_id]
         base_image=self.baseline_image_url[covenant_id]
@@ -482,6 +483,8 @@ class MeaningLock(gl.Contract):
         self.confidence[covenant_id]=record["confidence"]
         self.topic_mask[covenant_id]=record["mask"]
         self.checked_at[covenant_id]=self._now()
+        if current_review != ROUND_CHALLENGE and current_review != ROUND_APPEAL:
+            raise gl.vm.UserError("invalid review type")
         if final==PRESERVED:
             if self.challenger_bond[covenant_id] > u256(0): self._send_gen(covenant_id,self.challenger[covenant_id],self.challenger_bond[covenant_id],"challenge bond returned",u256(2))
             self.challenger[covenant_id]=Address("0x0000000000000000000000000000000000000000")
@@ -494,9 +497,24 @@ class MeaningLock(gl.Contract):
             self.review_type[covenant_id]=ROUND_NONE
             self.state[covenant_id]=ACTIVE
             self.appeal_deadline[covenant_id]=u256(0)
+            self.pre_appeal_verdict[covenant_id]=NONE
         else:
             self.state[covenant_id]=RESOLVED
-            self.appeal_deadline[covenant_id]=self._now()+self.covenant_challenge_window[covenant_id]
+            self.review_type[covenant_id]=ROUND_NONE
+            if current_review == ROUND_APPEAL and final == UNVERIFIABLE:
+                # An inconclusive appeal cannot erase the already-adverse
+                # result. Restore it and make settlement final.
+                final=self.pre_appeal_verdict[covenant_id]
+                self.verdict[covenant_id]=final
+                self.appeal_deadline[covenant_id]=u256(0)
+            elif current_review == ROUND_APPEAL and self.appeal_count[covenant_id] >= MAX_APPEALS:
+                self.appeal_deadline[covenant_id]=u256(0)
+            else:
+                self.appeal_deadline[covenant_id]=self._now()+self.covenant_challenge_window[covenant_id]
+            if current_review == ROUND_APPEAL:
+                self.pre_appeal_verdict[covenant_id]=NONE
+            else:
+                self.appeal_deadline[covenant_id]=self._now()+self.covenant_challenge_window[covenant_id] if final != UNVERIFIABLE else u256(0)
         if final==UNVERIFIABLE:
             self.recovery_deadline[covenant_id]=self._now()+self.covenant_recovery_window[covenant_id]
             self.note[covenant_id]="unverifiable; recovery window"
@@ -637,6 +655,7 @@ class MeaningLock(gl.Contract):
         self.verdict[covenant_id]=self.pre_appeal_verdict[covenant_id]
         self.appeal_deadline[covenant_id]=u256(0)
         self.review_type[covenant_id]=ROUND_NONE
+        self.pre_appeal_verdict[covenant_id]=NONE
         self._audit(covenant_id,"APPEAL_TIMEOUT",gl.message.sender_address,"original adverse verdict restored")
 
     @gl.public.write
@@ -825,7 +844,9 @@ class MeaningLock(gl.Contract):
             return False
         if (self.verdict[covenant_id] == CHANGED or self.verdict[covenant_id] == REMOVED) and self.state[covenant_id] == RESOLVED and self.review_type[covenant_id] == ROUND_NONE:
             return self.appeal_deadline[covenant_id] == u256(0) or self._deadline_has_elapsed(self.appeal_deadline[covenant_id])
-        if self.verdict[covenant_id] == PRESERVED and self._now() >= self.expires_at[covenant_id]:
+        if self.state[covenant_id] == ACTIVE and self.round[covenant_id] == u256(0) and self.verdict[covenant_id] == NONE and self._now() >= self.expires_at[covenant_id]:
+            return True
+        if self.state[covenant_id] == ACTIVE and self.round[covenant_id] != u256(0) and self.verdict[covenant_id] == PRESERVED and self._now() >= self.expires_at[covenant_id]:
             return True
         if self.verdict[covenant_id] == UNVERIFIABLE and self.state[covenant_id] == RESOLVED and self.review_type[covenant_id] == ROUND_NONE and self.recovery_deadline[covenant_id] != u256(0) and self._now() >= self.recovery_deadline[covenant_id]:
             return True
