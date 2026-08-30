@@ -3,7 +3,7 @@
 - [x] `contracts/` contains only `meaning_lock.py`.
 - [x] `contracts/meaning_lock.py` is a single deployable candidate; no artificial line-count requirement is used.
 - [x] Lint, validate, schema and typecheck exit zero using the pinned SDK.
-- [x] Direct Mode tests include mocked web, screenshot and JSON LLM responses; final CI run `33335456689` reports `35 passed, 2 skipped` with the documented loader compatibility shim.
+- [x] Direct Mode tests include mocked web, screenshot and JSON LLM responses; final CI run `33335618328` reports `35 passed, 2 skipped` with the documented loader compatibility shim.
 - [ ] Environment-gated integration smoke test requires a configured live RPC/address; canonical payable and consensus flows are independently recorded in `evidence/DEPLOYMENT.md`.
 - [x] Fresh canonical-address payable proof is recorded for `0x74FB9B259a3BC0d8852de0c2597952360903294e` (registration, activation, challenge, and verification finalized; final state `ACTIVE/PRESERVED/ROUND_NONE`; challenger refunded and publisher principal locked).
 - [x] Explorer source parity for the corrected source was confirmed during fresh Studio deployment; schema exposes the corrected source methods.

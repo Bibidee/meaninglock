@@ -20,7 +20,7 @@ Its complete payable lifecycle proof is finalized and source-matched.
 - Challenger bond: returned/resolved (`0` remaining); publisher bond: locked (`1000000000000000000` remaining)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed against the frozen source commit and SHA-256 above.
-- CI: successful workflow run `33335456689` on final HEAD; Direct Mode `35 passed, 2 skipped`.
+- CI: successful workflow run `33335618328` on final HEAD; Direct Mode `35 passed, 2 skipped`.
 
 ## SUPERSEDED CORRECTED-SOURCE DEPLOYMENT
 
