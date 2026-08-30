@@ -920,9 +920,10 @@ class MeaningLock(gl.Contract):
         role_key=(covenant_id << u256(64)) | (round_number << u256(32)) | role
         if sequence > self.evidence_role_count[role_key]: raise gl.vm.UserError("unknown evidence reference")
         seen=u256(0)
-        n=u256(0)
-        while n < self.evidence_count[covenant_id]:
-            n=n+u256(1)
+        for index in range(1, 65):
+            n=u256(index)
+            if n > self.evidence_count[covenant_id]:
+                break
             key=self._evidence_key_for(n,covenant_id)
             if self.evidence_round[key] == round_number and self.evidence_role[key] == role:
                 seen=seen+u256(1)

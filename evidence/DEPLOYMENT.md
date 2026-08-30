@@ -1,6 +1,23 @@
 # MeaningLock deployment evidence
 
-## CURRENT CANONICAL DEPLOYMENT
+## CURRENT CANONICAL DEPLOYMENT (CORRECTED SOURCE)
+
+- Network: GenLayer Studio Network
+- Address: `0x40336e78de0ecc6d92c6d863a02d9f5775ce4c1c`
+- Deployment transaction: `0x40336e78de0ecc6d92c6d863a02d9f5775ce4c1cf71ad135d937b900430e8d61`
+- Source commit: `010c2ffb60c574ad3baddd6a80649132ce6846d1`
+- Contract SHA-256: `65C376CD63FDBB9C46151B22D6103CAD4A0E106862526B27DF275D2269DCC9F3`
+- Constructor: `1000000000000000000`, `86400`, `86400`; deployment `FINALIZED`, consensus `ACCEPTED`
+- Schema: 50 methods (27 view, 23 write), including `get_challenge_source_version` and `get_round_evidence_reference`
+- Live covenant ID: `1`
+- Registration: `0x548152cb42dc272fc74c20961deedb6f890440decad3dd06f8973adb85d8df9a` — `FINALIZED`
+- Activation: `0x6bf5894a2b7b853fe2c1866ccf65d4984543b08d1139840b7740c39141a14d07` — `FINALIZED`
+- Challenge: `0xd09bbdf4ae60dc42c0cd8d1e0d2aaf4eb88416372c249f85009d4514225c1e44` — `FINALIZED`
+- Verification: `0xa742f13823afe3e5ac0beb16d6569d084a98f6c2833960891203b7c64411b1d4` — `FINALIZED`, `ACCEPTED`
+- Final read: `ACTIVE`, verdict `PRESERVED`, review type `ROUND_NONE`, escrow `1000000000000000000`
+- Challenger bond was resolved; publisher principal remains locked.
+
+## HISTORICAL DEPLOYMENT (SOURCE-PREVIOUS)
 
 > **Superseded by an unreleased corrective source change.** This address is
 > retained as historical evidence until the corrected source is validated and
