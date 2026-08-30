@@ -29,6 +29,8 @@ ordinary review refunds challenger collateral and resumes `ACTIVE`; an adverse
 review becomes `RESOLVED`, keeps an appeal grace period, and can settle only
 after that period. An ordinary challenge timeout resolves only that review and
 returns monitoring to `ACTIVE` while the publisher principal remains locked.
+If the covenant later expires cleanly, uncontested expiry remains executable
+even after earlier timed-out rounds.
 
 Appeal verification can overturn an adverse result, retain an adverse result,
 or restore the prior adverse result when appeal evidence is unverifiable. Once
