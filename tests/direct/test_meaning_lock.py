@@ -278,6 +278,56 @@ def test_pending_repeat_challenge_blocks_preserved_expiry_claim(direct_vm, direc
     assert contract.get_status(covenant)[4] == 0
 
 
+def test_timeout_before_expiry_allows_eventual_clean_expiry(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob, expires=2000000000)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "temporary review", "https://evidence.example", "")
+    direct_vm.warp("2028-01-01T00:00:00Z")
+    contract.recover_timed_out_challenge(covenant)
+    status = contract.get_status(covenant)
+    assert status[0] == 1 and status[1] == 0 and status[4] == 100
+    assert contract.get_review_type(covenant) == 0
+    assert contract.challenger_bond[covenant] == 0
+    assert contract.escrow[covenant] == contract.publisher_bond[covenant] + contract.challenger_bond[covenant]
+    direct_vm.warp("2034-01-01T00:00:00Z")
+    assert contract.is_claimable(covenant) is True
+    direct_vm.sender = direct_alice
+    contract.claim_uncontested_expiry(covenant)
+    status = contract.get_status(covenant)
+    assert status[0] == 4 and status[1] == 6 and status[4] == 0
+    assert contract.publisher_bond[covenant] == 0 and contract.paid[covenant] is True
+    assert contract.is_claimable(covenant) is False
+
+
+def test_preserved_timeout_then_eventual_clean_expiry(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob, expires=2000000000)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "preserved round", "https://evidence.example", "")
+    _mock_verdict(direct_vm, "PRESERVED")
+    assert contract.verify(covenant) == 1
+    direct_vm.clear_mocks()
+    direct_vm.value = 1
+    contract.challenge(covenant, "later timeout", "https://evidence.example", "")
+    direct_vm.warp("2028-01-01T00:00:00Z")
+    contract.recover_timed_out_challenge(covenant)
+    assert contract.get_status(covenant)[0] == 1
+    assert contract.get_review_type(covenant) == 0
+    assert contract.verdict[covenant] == 0
+    assert contract.round[covenant] > 0
+    assert contract.challenger_bond[covenant] == 0
+    assert contract.escrow[covenant] == contract.publisher_bond[covenant]
+    direct_vm.warp("2034-01-01T00:00:00Z")
+    assert contract.is_claimable(covenant) is True
+    direct_vm.sender = direct_alice
+    contract.claim_uncontested_expiry(covenant)
+    assert contract.get_status(covenant)[0] == 4
+    assert contract.escrow[covenant] == 0 and contract.paid[covenant] is True
+
+
 def test_audit_cap_does_not_block_adverse_settlement(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)

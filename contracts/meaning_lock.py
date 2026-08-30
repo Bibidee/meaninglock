@@ -600,7 +600,7 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def claim_uncontested_expiry(self,covenant_id:u256)->None:
         self._known(covenant_id); self._publisher(covenant_id)
-        if self.state[covenant_id]!=ACTIVE or self.round[covenant_id]!=u256(0) or not self._expiry_has_elapsed(covenant_id): raise gl.vm.UserError("uncontested expiry unavailable")
+        if self.state[covenant_id]!=ACTIVE or self.review_type[covenant_id]!=ROUND_NONE or self.verdict[covenant_id]!=NONE or self.challenger_bond[covenant_id]!=u256(0) or self.challenge_deadline[covenant_id]!=u256(0) or self.recovery_deadline[covenant_id]!=u256(0) or not self._expiry_has_elapsed(covenant_id) or self.paid[covenant_id]: raise gl.vm.UserError("clean expiry unavailable")
         self.verdict[covenant_id]=EXPIRED
         self._audit(covenant_id,"UNCONTESTED_EXPIRY",gl.message.sender_address,"normal expiry settlement")
         self._send_gen(covenant_id,self.publisher[covenant_id],self.publisher_bond[covenant_id],"uncontested expiry")
@@ -843,7 +843,7 @@ class MeaningLock(gl.Contract):
             return False
         if (self.verdict[covenant_id] == CHANGED or self.verdict[covenant_id] == REMOVED) and self.state[covenant_id] == RESOLVED and self.review_type[covenant_id] == ROUND_NONE:
             return self.appeal_deadline[covenant_id] == u256(0) or self._deadline_has_elapsed(self.appeal_deadline[covenant_id])
-        if self.state[covenant_id] == ACTIVE and self.round[covenant_id] == u256(0) and self.verdict[covenant_id] == NONE and self._now() >= self.expires_at[covenant_id]:
+        if self.state[covenant_id] == ACTIVE and self.review_type[covenant_id] == ROUND_NONE and self.verdict[covenant_id] == NONE and self.challenger_bond[covenant_id] == u256(0) and self.challenge_deadline[covenant_id] == u256(0) and self.recovery_deadline[covenant_id] == u256(0) and self._now() >= self.expires_at[covenant_id]:
             return True
         if self.state[covenant_id] == ACTIVE and self.round[covenant_id] != u256(0) and self.verdict[covenant_id] == PRESERVED and self._now() >= self.expires_at[covenant_id]:
             return True
