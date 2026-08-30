@@ -2,21 +2,30 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
-**Pending fresh deployment.** The previously deployed address below is retained
-as historical evidence only because the contract source changed in the final
-security pass. It must not be presented as the canonical deployment until the
-new source is deployed and Explorer parity is confirmed.
+**Pending fresh deployment.** The previous addresses below are retained as
+historical evidence only. The latest source includes a Studio ABI compatibility
+fix and has not yet completed a clean payable lifecycle on a replacement address.
 
 - Network: GenLayer Studio Network
 - Address: `0x689Af928b6E030a5b0881f0B141f74ADcA7f7497` (superseded pending fresh deployment)
 - Deployment transaction: `0x2959d6c807c88e166def8bef85b725497a7979acc1cc7810be9c602fdc5b9f44`
-- Updated source commit: `96487cb8620c82c3900f0ceb2daf89e5795b1781`
-- Updated contract SHA-256: `F64A3F4254AD867338E351E18939CDFCD3785AD481AC32576E473D23C22309A7`
+- Updated source commit: `441abd1` (full commit in Git history)
+- Updated contract SHA-256: `909C15B5DFF5ECF66FC4936BD621B4AA7A61B3F22F42B969CED70F94C8FECC7C`
 - Constructor: minimum bond `1000000000000000000`, challenge window `86400`, recovery window `86400`
 - Constructor consensus: `MAJORITY_AGREE`; transaction status `ACCEPTED`
 - Updated schema: 47 methods (26 view, 21 write)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed byte-equivalent after line-ending normalization.
+
+## FAILED REPLACEMENT ATTEMPTS (NOT CANONICAL)
+
+- `0x6c127b25a340Bce9b57d342993cA59CCf5280849` — deployment
+  `0xd3f95fc6399f0be3a9eda96cd78614b3dd63e38579611137550de2ed55fc4b97`;
+  registration `0x294d13883d163c00c9051515136e5fa6acfa1d11fbf138f6d3eb254903432ae3`
+  finalized with a GenVM `Address(int)` conversion error.
+- `0xdEd8c00B613af1f5C0Ae461c32ABd2E117298669` — deployment
+  `0x742ca2f7a21cd30d30017cdfca60e42afde9ba0788b399966ad6dcbcb78c15f3` finalized,
+  but Studio emitted schema-generation indentation diagnostics; no writes were attempted.
 
 ## HISTORICAL PAYABLE LIFECYCLE PROOF (SUPERSEDED ADDRESS)
 
