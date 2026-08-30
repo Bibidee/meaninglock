@@ -653,7 +653,7 @@
         ],
         [
           "beneficiary",
-          "address"
+          "string"
         ],
         [
           "expires_at",

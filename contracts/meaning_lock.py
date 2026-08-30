@@ -219,8 +219,8 @@ class MeaningLock(gl.Contract):
         self.recovery_window=recovery_window
 
     @gl.public.write.payable
-    def register_covenant(self, label: str, live_url: str, baseline_url: str, baseline_image_url: str, baseline_digest: str, statement: str, topics: str, beneficiary: Address, expires_at: u256) -> u256:
-        beneficiary = Address(beneficiary)
+    def register_covenant(self, label: str, live_url: str, baseline_url: str, baseline_image_url: str, baseline_digest: str, statement: str, topics: str, beneficiary: str, expires_at: u256) -> u256:
+        beneficiary_address: Address = Address(beneficiary)
         if self.paused: raise gl.vm.UserError("paused")
         self._text(label,"label")
         self._text(live_url,"live url")
@@ -229,8 +229,8 @@ class MeaningLock(gl.Contract):
         self._assert_baseline_url(baseline_url)
         self._assert_image_optional(baseline_image_url)
         self._assert_digest(baseline_digest.lower())
-        if gl.message.sender_address == beneficiary: raise gl.vm.UserError("publisher and beneficiary must differ")
-        if beneficiary == Address("0x0000000000000000000000000000000000000000"): raise gl.vm.UserError("beneficiary cannot be zero")
+        if gl.message.sender_address == beneficiary_address: raise gl.vm.UserError("publisher and beneficiary must differ")
+        if beneficiary_address == Address("0x0000000000000000000000000000000000000000"): raise gl.vm.UserError("beneficiary cannot be zero")
         self._text(statement,"statement")
         self._text(topics,"topics")
         if expires_at<=self._now(): raise gl.vm.UserError("expiry must be future")
@@ -238,7 +238,7 @@ class MeaningLock(gl.Contract):
         i=self.count+u256(1)
         self.count=i
         self.publisher[i]=gl.message.sender_address
-        self.beneficiary[i]=beneficiary
+        self.beneficiary[i]=beneficiary_address
         self.live_url[i]=live_url
         self.baseline_url[i]=baseline_url
         self.baseline_image_url[i]=baseline_image_url
