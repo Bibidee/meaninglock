@@ -202,7 +202,10 @@ def test_funded_draft_can_cancel_and_refund_publisher(direct_vm, direct_deploy, 
     assert contract.paid[draft] is True
     assert contract.note[draft] == "publisher cancellation"
     assert contract.is_claimable(draft) is False
-    assert contract.get_payout(draft) == (True, direct_alice, 100, "publisher cancellation")
+    payout = contract.get_payout(draft)
+    assert payout[0] is True
+    assert payout[1] == contract.publisher[draft]
+    assert payout[2:] == (100, "publisher cancellation")
     assert contract.get_payout_totals(draft) == (100, 100, 0, 0)
 
 
