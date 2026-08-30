@@ -23,6 +23,47 @@ Its complete payable lifecycle proof is finalized and source-matched.
 - CI: GitHub Actions validation passes on main, including GenVM lint, validate,
   schema, typecheck, and Direct Mode. Direct Mode result: `35 passed, 2 skipped`.
 
+## CANONICAL EXPLORER POPULATION — THREE LIVE PRESERVED COVENANTS
+
+These demonstrations use the frozen source and immutable evidence documents.
+Each write was submitted only after the preceding write finalized successfully.
+
+### Demonstration 1 — Service Fee Covenant (existing canonical proof)
+
+- Covenant ID: `1`
+- Registration: `0x27a0dfef5c693cbb649f53252aad8134a1b0c30c8252c92a09daa782aafa742f`
+- Activation: `0x0a84acc919434648a7873563d3bfa76e02ea09ed2aec2bac52b74ff4fa5b1034`
+- Challenge: `0xb40543d6fa8ad9f04bed516ede3c5fe475e65677d9837771ddd33723203ce256`
+- Verification: `0x6b43b5f75b62aff44e402f508a3c949109a1413a23a708c2c1c560a45eea5fa2`
+- Final: `ACTIVE / PRESERVED / ROUND_NONE`; escrow `1000000000000000000`; publisher bond locked; challenger bond `0`
+
+### Demonstration 2 — Withdrawal Availability Covenant
+
+- Covenant ID: `3`
+- Registration: `0xaf46258f45a92026618c51f26dfc16bbb9a8ce2b867791d2efaa32a698cbe2fa` — `ACCEPTED`
+- Activation: `0x444d5303f3f3fc0cc036c706c5119816ea200e20cd800d6c5e3f7323caaeba32` — `ACCEPTED`
+- Challenge: `0x7b17c0da1cf44b210ae931f231e8c1ed7578f442c71b3dfe746f4ff52fd3de7c` — `ACCEPTED`
+- Verification: `0xb16eb5598e4bbd2a3de49b101f115f0acfd6ca8d2d63894d82f76c66a36e5e7b` — `ACCEPTED`
+- Final: `ACTIVE / PRESERVED / ROUND_NONE`; escrow `1000000000000000000`; publisher bond locked; challenger bond `0`
+
+### Demonstration 3 — Refund Window Covenant
+
+- Covenant ID: `4`
+- Registration: `0xf7d9218d0e049da4e9b631f7233365a3cb1e3c2e25b79ff8b6b05e9c5d3ac937` — `ACCEPTED`
+- Activation: `0x8be6bb3d777ba79fc9a62ce61b55a674961d79c1c10b9d68a20d7d3f04df1c34` — `ACCEPTED`
+- Challenge: `0xc1fa47a8586e9fa2e25b3bded12ab7e7e6190e7740333c5b7d016b25a3988027` — `ACCEPTED`
+- Verification: `0xd9709083c9772f0c79bcc05ab4b986fcdae31ee790900917dc90fb588183cd55` — `ACCEPTED`
+- Final: `ACTIVE / PRESERVED / ROUND_NONE`; escrow `1000000000000000000`; publisher bond locked; challenger bond `0`
+
+### HALTED MISTYPED-EVIDENCE COVENANT
+
+- Covenant ID: `2`
+- Registration: `0x995ae1e0076891dfea0a6acf015c23abe2b83fe7283cbca312d93ed98bfb244a`
+- Activation: `0x5f44ed4f4fb17bb0a3a58a30a49c9c9a37657b7e67376667fb92f1e1555455c7`
+- Challenge: `0x8828456e0e0700fdad42bad780475534ca8d4aea8e59ba5c9cd098f83593481e`
+- Current state: `PENDING / ROUND_CHALLENGE`, escrow `2000000000000000000`
+- The evidence URL was mistyped. Verification was never attempted; this covenant is not one of the three clean demonstrations.
+
 ## SUPERSEDED CORRECTED-SOURCE DEPLOYMENT
 
 - Network: GenLayer Studio Network
