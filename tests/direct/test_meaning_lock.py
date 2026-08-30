@@ -129,11 +129,12 @@ def test_semantic_equivalence_rejects_changed_vs_removed(direct_vm, direct_deplo
 def test_semantic_equivalence_is_sensitive_to_covenant_policy(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     first = _register(contract, direct_vm, direct_alice, direct_bob)
-    second = _register(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 100
+    second = contract.register_covenant("policy", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2", "terms", "topics", direct_bob, 2000000000)
     record = {"outcome": 1, "impact": 1, "confidence": 2, "mask": 1}
     assert contract._derive_for_covenant(first, record) == 1
-    direct_vm.sender = direct_alice
-    contract.configure_evidence_policy(second, 2, 0, False, True)
+    contract.configure_evidence_policy(second, 2, 0, False)
     assert contract._derive_for_covenant(second, record) == 4
 
 
@@ -161,7 +162,7 @@ def test_registration_binds_baseline_digest_and_rejects_role_collision(direct_vm
         contract.register_covenant("bad", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2", "terms", "topics", direct_alice, 2000000000)
     covenant = _register(contract, direct_vm, direct_alice, direct_bob)
     assert contract.baseline_digest[covenant] == "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2"
-    with direct_vm.expect_revert("digest must be 64 hex characters"):
+    with direct_vm.expect_revert("draft configuration only"):
         contract.update_baseline_reference(covenant, "https://new-baseline.example", "", "bad")
 
 
@@ -175,6 +176,28 @@ def test_draft_activation_freezes_covenant_and_draft_can_cancel(direct_vm, direc
     assert contract.get_status(draft)[0] == 1
     with direct_vm.expect_revert("cancellation disabled after activation"):
         contract.cancel_before_challenge(draft, "too late")
+
+
+def test_all_material_draft_setters_freeze_at_activation(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 100
+    cid = contract.register_covenant("draft", "https://live.example", "https://baseline.example", "", "7d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2", "terms", "topics", direct_bob, 2000000000)
+    contract.set_covenant_description(cid, "draft notes")
+    contract.configure_evidence_policy(cid, 2, 2, False)
+    contract.configure_settlement_split(cid, 1000, 8000, 1000)
+    contract.update_baseline_reference(cid, "https://baseline-two.example", "", "8d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2")
+    before = (contract.baseline_url[cid], contract.baseline_digest[cid], contract.minimum_confidence[cid], contract.settlement_beneficiary_bps[cid])
+    contract.activate_covenant(cid)
+    with direct_vm.expect_revert("draft configuration only"):
+        contract.set_covenant_description(cid, "late")
+    with direct_vm.expect_revert("draft configuration only"):
+        contract.configure_evidence_policy(cid, 0, 0, False)
+    with direct_vm.expect_revert("draft configuration only"):
+        contract.configure_settlement_split(cid, 0, 10000, 0)
+    with direct_vm.expect_revert("draft configuration only"):
+        contract.update_baseline_reference(cid, "https://baseline-three.example", "", "9d9b84e0cbe5e3545b1eaaed076a93dffc30663e865034f00a5aabe39b26cad2")
+    assert before == (contract.baseline_url[cid], contract.baseline_digest[cid], contract.minimum_confidence[cid], contract.settlement_beneficiary_bps[cid])
 
 
 def test_baseline_commitment_mismatch_is_safe_unverifiable(direct_vm, direct_deploy):

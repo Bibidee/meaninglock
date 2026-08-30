@@ -2,6 +2,10 @@
 
 ## CURRENT CANONICAL DEPLOYMENT
 
+> **Superseded by an unreleased corrective source change.** This address is
+> retained as historical evidence until the corrected source is validated and
+> freshly deployed. Do not represent it as byte-identical to the working tree.
+
 The deployment below is the current canonical address for the final hardening
 source. All five user-initiated transactions finalized successfully.
 
@@ -74,6 +78,21 @@ The canonical address has only successful user-initiated deployment,
 registration, challenge, and verification transactions. Internal validator
 `ERROR`/`idle` diagnostics were present in the consensus receipt but did not
 prevent final `MAJORITY_AGREE` or mutate the transaction outcome.
+
+## LIVE-EVIDENCE LIMITATIONS (CURRENT PASS)
+
+The canonical deployment has a successful semantic verification, but that
+verification safely resolved `UNVERIFIABLE` because the supplied baseline
+commitment did not match the rendered remote document. A follow-up attempt to
+register a second covenant was rejected by Studio before contract execution:
+its schema runner loaded an unrelated stale `ClaimVerifier` artifact. No
+transaction hash was created by that attempt, and no retry was issued.
+
+The repository's Direct Mode suite remains the authoritative executable proof
+for adverse settlement, appeal finality, timeout recovery, repeated preserved
+rounds, audit-cap liveness, and multimodal mocks. A fresh live `PRESERVED`
+receipt and live adverse/appeal/recovery writes still require a healthy Studio
+schema/runtime session and funded wallets; they are not claimed here.
 
 ## SUPERSEDED DEPLOYMENTS
 

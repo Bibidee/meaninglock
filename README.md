@@ -33,6 +33,14 @@ economically material configuration before monitoring begins. Evidence is always
 data in the adjudication prompt, including page text, screenshots, and challenge
 references.
 
+All draft setters use the explicit `DRAFT` guard; activation is the sole freeze
+boundary. Baseline URL, image and SHA-256 commitment, evidence thresholds,
+settlement split, and draft description cannot be changed after activation.
+Each challenge snapshots its source version, so later migrations cannot rewrite
+the evidence context of an open review. Evidence references are capped per
+covenant, round, and submitting role (eight per role per round); one party
+cannot consume another party's quota.
+
 ## Lifecycle
 
 `DRAFT → ACTIVE (frozen) → PENDING (review round) → ACTIVE (preserved/timeout) → PENDING ... → RESOLVED (adverse appeal window) → CLOSED`.
@@ -69,6 +77,9 @@ recovery deadline; recovery is blocked before that deadline and returns both
 escrow components afterward. Registered covenants snapshot the challenge and
 recovery windows, so owner changes affect future covenants only. The bounded
 audit store stops recording at its cap without reverting economic exit paths.
+
+There is no fallback switch that can turn uncertainty into an adverse verdict:
+uncertain or malformed evidence always reduces to `UNVERIFIABLE`.
 
 The appeal limit is covenant-lifetime scoped: `appeal_count` is monotonic and
 does not reset when monitoring resumes after a successful appeal. Live-source

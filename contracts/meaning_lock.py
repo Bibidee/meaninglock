@@ -14,6 +14,7 @@ MAX_REASON_CHARS=2000
 MAX_DESCRIPTION_CHARS=4000
 MAX_URL_CHARS=2048
 MAX_EVIDENCE_REFERENCES=64
+MAX_EVIDENCE_PER_ROLE=8
 MAX_AUDIT_RECORDS=256
 MAX_APPEALS=2
 TOPIC_MASK_MAX=u256(255)
@@ -103,6 +104,7 @@ class MeaningLock(gl.Contract):
     note: TreeMap[u256, str]
     description: TreeMap[u256, str]
     source_version: TreeMap[u256, u256]
+    challenge_source_version: TreeMap[u256, u256]
     source_history_count: TreeMap[u256, u256]
     source_history_url: TreeMap[u256, str]
     source_history_at: TreeMap[u256, u256]
@@ -111,7 +113,6 @@ class MeaningLock(gl.Contract):
     minimum_confidence: TreeMap[u256, u256]
     permitted_impact: TreeMap[u256, u256]
     visual_required: TreeMap[u256, bool]
-    fallback_allowed: TreeMap[u256, bool]
     settlement_publisher_bps: TreeMap[u256, u256]
     settlement_beneficiary_bps: TreeMap[u256, u256]
     settlement_challenger_bps: TreeMap[u256, u256]
@@ -120,6 +121,9 @@ class MeaningLock(gl.Contract):
     evidence_url: TreeMap[u256, str]
     evidence_digest: TreeMap[u256, str]
     evidence_submitted_at: TreeMap[u256, u256]
+    evidence_round: TreeMap[u256, u256]
+    evidence_role: TreeMap[u256, u256]
+    evidence_role_count: TreeMap[u256, u256]
     appeal_count: TreeMap[u256, u256]
     pre_appeal_verdict: TreeMap[u256, u256]
     appeal_deadline: TreeMap[u256, u256]
@@ -179,6 +183,7 @@ class MeaningLock(gl.Contract):
         self.note=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.description=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.source_version=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.challenge_source_version=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.source_history_count=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.source_history_url=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.source_history_at=gl.storage.inmem_allocate(TreeMap[u256, u256])
@@ -187,7 +192,6 @@ class MeaningLock(gl.Contract):
         self.minimum_confidence=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.permitted_impact=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.visual_required=gl.storage.inmem_allocate(TreeMap[u256, bool])
-        self.fallback_allowed=gl.storage.inmem_allocate(TreeMap[u256, bool])
         self.settlement_publisher_bps=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.settlement_beneficiary_bps=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.settlement_challenger_bps=gl.storage.inmem_allocate(TreeMap[u256, u256])
@@ -196,6 +200,9 @@ class MeaningLock(gl.Contract):
         self.evidence_url=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.evidence_digest=gl.storage.inmem_allocate(TreeMap[u256, str])
         self.evidence_submitted_at=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.evidence_round=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.evidence_role=gl.storage.inmem_allocate(TreeMap[u256, u256])
+        self.evidence_role_count=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.appeal_count=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.pre_appeal_verdict=gl.storage.inmem_allocate(TreeMap[u256, u256])
         self.appeal_deadline=gl.storage.inmem_allocate(TreeMap[u256, u256])
@@ -279,6 +286,7 @@ class MeaningLock(gl.Contract):
         self.note[i]="active"
         self.description[i]=""
         self.source_version[i]=u256(1)
+        self.challenge_source_version[i]=u256(0)
         self.source_history_count[i]=u256(1)
         self.source_history_url[(i << u256(32)) | u256(1)]=live_url
         self.source_history_at[(i << u256(32)) | u256(1)]=self._now()
@@ -287,7 +295,6 @@ class MeaningLock(gl.Contract):
         self.minimum_confidence[i]=MEDIUM
         self.permitted_impact[i]=MATERIAL
         self.visual_required[i]=baseline_image_url!=""
-        self.fallback_allowed[i]=True
         self.settlement_publisher_bps[i]=u256(0)
         self.settlement_beneficiary_bps[i]=u256(10000)
         self.settlement_challenger_bps[i]=u256(0)
@@ -326,11 +333,10 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def set_covenant_description(self, covenant_id: u256, description: str) -> None:
         """Attach human-readable implementation notes without changing the promise."""
-        self._active(covenant_id)
+        self._draft(covenant_id)
         self._publisher(covenant_id)
         self._text(description, "description")
         self.description[covenant_id] = description
-        self.source_version[covenant_id] = self.source_version[covenant_id] + u256(1)
         self._audit(covenant_id, "DESCRIPTION_UPDATED", gl.message.sender_address, "metadata only")
 
     @gl.public.write
@@ -340,12 +346,11 @@ class MeaningLock(gl.Contract):
         minimum_confidence: u256,
         permitted_impact: u256,
         visual_required: bool,
-        fallback_allowed: bool,
     ) -> None:
-        """Set conservative classification thresholds before a challenge exists."""
-        self._active(covenant_id)
+        """Set conservative classification thresholds while draft policy is editable;
+        policy frozen after first challenge and activation."""
+        self._draft(covenant_id)
         self._publisher(covenant_id)
-        if self.round[covenant_id] != u256(0): raise gl.vm.UserError("settlement policy frozen after first challenge")
         if minimum_confidence > HIGH:
             raise gl.vm.UserError("invalid confidence threshold")
         if permitted_impact > CRITICAL:
@@ -355,7 +360,6 @@ class MeaningLock(gl.Contract):
         self.minimum_confidence[covenant_id] = minimum_confidence
         self.permitted_impact[covenant_id] = permitted_impact
         self.visual_required[covenant_id] = visual_required
-        self.fallback_allowed[covenant_id] = fallback_allowed
         self._audit(covenant_id, "POLICY_UPDATED", gl.message.sender_address, "evidence policy changed")
 
     @gl.public.write
@@ -367,9 +371,8 @@ class MeaningLock(gl.Contract):
         challenger_bps: u256,
     ) -> None:
         """Configure deterministic basis-point allocation for adverse settlement."""
-        self._active(covenant_id)
+        self._draft(covenant_id)
         self._publisher(covenant_id)
-        if self.round[covenant_id] != u256(0): raise gl.vm.UserError("settlement policy frozen after first challenge")
         if publisher_bps + beneficiary_bps + challenger_bps != u256(10000):
             raise gl.vm.UserError("settlement split must equal 10000 bps")
         self.settlement_publisher_bps[covenant_id] = publisher_bps
@@ -394,9 +397,17 @@ class MeaningLock(gl.Contract):
         self._assert_live_url(url)
         self._assert_digest(digest.lower())
         if not self._state_allows_evidence(covenant_id): raise gl.vm.UserError("evidence phase closed")
-        if gl.message.sender_address != self.publisher[covenant_id] and gl.message.sender_address != self.beneficiary[covenant_id] and gl.message.sender_address != self.challenger[covenant_id]:
+        if gl.message.sender_address == self.publisher[covenant_id]: role=ROLE_PUBLISHER
+        elif gl.message.sender_address == self.beneficiary[covenant_id]: role=ROLE_BENEFICIARY
+        elif gl.message.sender_address == self.challenger[covenant_id]: role=ROLE_CHALLENGER
+        else:
             raise gl.vm.UserError("covenant party only")
         if self.evidence_count[covenant_id] >= MAX_EVIDENCE_REFERENCES: raise gl.vm.UserError("evidence limit reached")
+        round_number=self.round[covenant_id]
+        role_key=(covenant_id << u256(64)) | (round_number << u256(32)) | role
+        role_count=self.evidence_role_count[role_key]
+        if role_count >= MAX_EVIDENCE_PER_ROLE: raise gl.vm.UserError("role evidence limit reached")
+        self.evidence_role_count[role_key]=role_count+u256(1)
         n = self.evidence_count[covenant_id] + u256(1)
         self.evidence_count[covenant_id] = n
         key = self._evidence_key_for(n, covenant_id)
@@ -404,6 +415,8 @@ class MeaningLock(gl.Contract):
         self.evidence_url[key] = url
         self.evidence_digest[key] = digest.lower()
         self.evidence_submitted_at[key] = self._now()
+        self.evidence_round[key] = round_number
+        self.evidence_role[key] = role
         self._audit(covenant_id, "EVIDENCE_REFERENCED", gl.message.sender_address, kind)
         return n
 
@@ -427,8 +440,8 @@ class MeaningLock(gl.Contract):
             raise gl.vm.UserError("settlement already paid")
         if self.appeal_count[covenant_id] >= u256(2):
             raise gl.vm.UserError("appeal limit reached")
-        if gl.message.sender_address != self.publisher[covenant_id] and gl.message.sender_address != self.beneficiary[covenant_id] and gl.message.sender_address != self.challenger[covenant_id]:
-            raise gl.vm.UserError("covenant party only")
+        if gl.message.sender_address != self.publisher[covenant_id]:
+            raise gl.vm.UserError("only harmed publisher may appeal")
         self.appeal_count[covenant_id] = self.appeal_count[covenant_id] + u256(1)
         self.pre_appeal_verdict[covenant_id] = self.verdict[covenant_id]
         self.appeal_reason[covenant_id] = reason
@@ -478,10 +491,8 @@ class MeaningLock(gl.Contract):
     @gl.public.write
     def update_baseline_reference(self, covenant_id: u256, baseline_url: str, image_url: str, baseline_digest: str) -> None:
         """Replace baseline evidence only before any challenge has started."""
-        self._active(covenant_id)
+        self._draft(covenant_id)
         self._publisher(covenant_id)
-        if self.round[covenant_id] != u256(0):
-            raise gl.vm.UserError("baseline is immutable after challenge")
         self._text(baseline_url, "baseline url")
         self._assert_baseline_url(baseline_url)
         self._assert_image_optional(image_url)
@@ -490,7 +501,6 @@ class MeaningLock(gl.Contract):
         self.baseline_image_url[covenant_id] = image_url
         self.baseline_digest[covenant_id] = baseline_digest.lower()
         self.visual_required[covenant_id] = image_url != ""
-        self.source_version[covenant_id] = self.source_version[covenant_id] + u256(1)
         self._audit(covenant_id, "BASELINE_UPDATED", gl.message.sender_address, "baseline reference changed")
 
     @gl.public.write.payable
@@ -504,6 +514,7 @@ class MeaningLock(gl.Contract):
         if gl.message.value<self.minimum_bond: raise gl.vm.UserError("challenge bond below minimum")
         if gl.message.sender_address==self.publisher[covenant_id]: raise gl.vm.UserError("publisher cannot challenge")
         self.challenger[covenant_id]=gl.message.sender_address
+        self.challenge_source_version[covenant_id]=self.source_version[covenant_id]
         self.reason[covenant_id]=reason
         self.challenge_url[covenant_id]=evidence_url
         self.challenge_image_url[covenant_id]=image_url
@@ -523,7 +534,10 @@ class MeaningLock(gl.Contract):
         if self.state[covenant_id]!=PENDING: raise gl.vm.UserError("pending challenge required")
         if self._now()>self.challenge_deadline[covenant_id]: raise gl.vm.UserError("challenge timed out")
         current_review = self.review_type[covenant_id]
-        live=self.live_url[covenant_id]
+        challenged_version=self.challenge_source_version[covenant_id]
+        if challenged_version == u256(0): challenged_version=self.source_version[covenant_id]
+        source_key=(covenant_id << u256(32)) | challenged_version
+        live=self.source_history_url[source_key]
         base=self.baseline_url[covenant_id]
         base_image=self.baseline_image_url[covenant_id]
         extra=self.challenge_url[covenant_id]
@@ -534,7 +548,6 @@ class MeaningLock(gl.Contract):
         minimum_confidence=self.minimum_confidence[covenant_id]
         permitted_impact=self.permitted_impact[covenant_id]
         visual_required=self.visual_required[covenant_id]
-        fallback_allowed=self.fallback_allowed[covenant_id]
         baseline_commitment=self.baseline_digest[covenant_id]
         def reduce(record):
             if not isinstance(record, dict): return UNVERIFIABLE
@@ -549,7 +562,6 @@ class MeaningLock(gl.Contract):
             if record["confidence"] < minimum_confidence or record["impact"] > permitted_impact:
                 return UNVERIFIABLE
             if visual_required and base_image == "": return UNVERIFIABLE
-            if not fallback_allowed and record["outcome"] == UNVERIFIABLE: return UNVERIFIABLE
             return self._derive(record)
         def leader_fn(): return self._evidence(live,base,base_image,extra,extra_image,statement,topics,reason,baseline_commitment)
         def validator_fn(leader_result) -> bool:
@@ -664,8 +676,6 @@ class MeaningLock(gl.Contract):
             return UNVERIFIABLE
         if self.visual_required[covenant_id] and self.baseline_image_url[covenant_id] == "":
             return UNVERIFIABLE
-        if not self.fallback_allowed[covenant_id] and record["outcome"] == UNVERIFIABLE:
-            raise gl.vm.UserError("fallback disabled for unverifiable evidence")
         return self._derive(record)
 
     def _verdict_name(self, verdict: u256) -> str:
@@ -832,14 +842,13 @@ class MeaningLock(gl.Contract):
         return (self.label[covenant_id], self.statement[covenant_id], self.topics[covenant_id])
 
     @gl.public.view
-    def get_policy(self, covenant_id: u256) -> tuple[u256, u256, bool, bool]:
+    def get_policy(self, covenant_id: u256) -> tuple[u256, u256, bool]:
         """Return thresholds used by deterministic verdict derivation."""
         self._known(covenant_id)
         return (
             self.minimum_confidence[covenant_id],
             self.permitted_impact[covenant_id],
             self.visual_required[covenant_id],
-            self.fallback_allowed[covenant_id],
         )
 
     @gl.public.view
@@ -904,6 +913,24 @@ class MeaningLock(gl.Contract):
         )
 
     @gl.public.view
+    def get_round_evidence_reference(self, covenant_id: u256, round_number: u256, role: u256, sequence: u256) -> tuple[str, str, str, u256]:
+        self._known(covenant_id)
+        if role < ROLE_PUBLISHER or role > ROLE_CHALLENGER or sequence == u256(0):
+            raise gl.vm.UserError("unknown evidence reference")
+        role_key=(covenant_id << u256(64)) | (round_number << u256(32)) | role
+        if sequence > self.evidence_role_count[role_key]: raise gl.vm.UserError("unknown evidence reference")
+        seen=u256(0)
+        n=u256(0)
+        while n < self.evidence_count[covenant_id]:
+            n=n+u256(1)
+            key=self._evidence_key_for(n,covenant_id)
+            if self.evidence_round[key] == round_number and self.evidence_role[key] == role:
+                seen=seen+u256(1)
+                if seen == sequence:
+                    return (self.evidence_kind[key],self.evidence_url[key],self.evidence_digest[key],self.evidence_submitted_at[key])
+        raise gl.vm.UserError("unknown evidence reference")
+
+    @gl.public.view
     def get_audit_entry(self, covenant_id: u256, audit_number: u256) -> tuple[str, Address, u256, str]:
         self._known(covenant_id)
         if audit_number == u256(0) or audit_number > self.audit_count[covenant_id]:
@@ -935,6 +962,11 @@ class MeaningLock(gl.Contract):
     def get_source_version(self, covenant_id: u256) -> u256:
         self._known(covenant_id)
         return self.source_version[covenant_id]
+
+    @gl.public.view
+    def get_challenge_source_version(self, covenant_id: u256) -> u256:
+        self._known(covenant_id)
+        return self.challenge_source_version[covenant_id]
 
     @gl.public.view
     def get_protocol_config(self) -> tuple[bool, u256, u256, u256]:
@@ -1069,7 +1101,7 @@ class MeaningLock(gl.Contract):
 
     def _covenant_can_be_cancelled(self, covenant_id: u256) -> bool:
         self._known(covenant_id)
-        return self.state[covenant_id] == ACTIVE and not self.paid[covenant_id]
+        return self.state[covenant_id] == DRAFT and not self.paid[covenant_id]
 
     def _covenant_can_be_reverified(self, covenant_id: u256) -> bool:
         self._known(covenant_id)
@@ -1194,12 +1226,6 @@ class MeaningLock(gl.Contract):
             return True
         return self.baseline_image_url[covenant_id] != ""
 
-    def _fallback_policy_is_satisfied(self, covenant_id: u256, value: u256) -> bool:
-        self._known(covenant_id)
-        if value != UNVERIFIABLE:
-            return True
-        return self.fallback_allowed[covenant_id]
-
     def _policy_accepts_record(self, covenant_id: u256, record) -> bool:
         if not self._confidence_is_acceptable(covenant_id, record["confidence"]):
             return False
@@ -1207,7 +1233,7 @@ class MeaningLock(gl.Contract):
             return False
         if not self._visual_policy_is_satisfied(covenant_id):
             return False
-        return self._fallback_policy_is_satisfied(covenant_id, record["outcome"])
+        return True
 
     def _topic_mask_is_bounded(self, value: u256) -> bool:
         return value <= TOPIC_MASK_MAX
@@ -1431,6 +1457,10 @@ class MeaningLock(gl.Contract):
     def _active(self,i:u256)->None:
         self._known(i)
         if self.state[i]!=ACTIVE or self._now()>=self.expires_at[i]: raise gl.vm.UserError("inactive or expired")
+    def _draft(self,i:u256)->None:
+        self._known(i)
+        if self.state[i]!=DRAFT: raise gl.vm.UserError("draft configuration only")
+        if self._now()>=self.expires_at[i]: raise gl.vm.UserError("inactive or expired")
     def _text(self,x:str,name:str)->None:
         if x=="": raise gl.vm.UserError(name+" required")
         limit=MAX_DESCRIPTION_CHARS
