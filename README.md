@@ -6,6 +6,15 @@ MeaningLock is a standalone GenLayer Intelligent Contract primitive for locking 
 
 Deterministic state holds the parties, escrow ledger, lifecycle, evidence references, immutable audit sequence, policy thresholds, appeal windows, settlement basis points, and canonical verdict. Verification performs web fetch/render, screenshot inspection and optional image evidence inside a GenLayer consensus block. Validators compare only compact categorical fields, never raw HTML, screenshots, prose, or timestamps. This minimizes — but cannot guarantee elimination of — nondeterministic `UNDETERMINED` outcomes.
 
+MeaningLock defines validator equivalence over the final covenant-specific verdict
+after deterministic policy reduction. Impact, confidence, and topic-mask fields
+are diagnostic metadata from the accepted consensus record and are not required
+to be byte-identical across validators. Small LLM metadata differences therefore
+do not create an unnecessary `MAJORITY_DISAGREE`; the economic and lifecycle
+boundary is the reduced final verdict. These metadata fields are exposed for
+auditability and policy reduction during verification, but do not later authorize
+settlement, alter payout amounts, bypass appeals, or change escrow accounting.
+
 The implementation separates registration and frozen terms, multimodal evidence acquisition, round-based challenge/appeal/recovery transitions, and deterministic escrow settlement with append-only audit records. Publisher collateral and challenger collateral are tracked independently; terminal actions can only return each component to its owner or route the publisher security deposit to the beneficiary after final adverse settlement. Adverse principal uses the configured publisher/beneficiary/challenger basis-point split (exactly 10,000 bps), with deterministic remainder allocation.
 
 ## Lifecycle

@@ -37,7 +37,8 @@ All transactions below are on the canonical address above.
 - `genvm-lint validate`: passed; 44 methods
 - `genvm-lint schema`: written successfully
 - `genvm-lint typecheck`: no type errors
-- Direct Mode: 20 passed, 2 skipped
+- Direct Mode: 26 passed, 2 skipped (including targeted semantic-verdict equivalence and malformed-record normalization)
+- Plain integration pytest: 1 skipped when no live `MEANINGLOCK_ADDRESS`/RPC environment is configured; canonical payable lifecycle evidence is recorded above.
 - Full release script: structural checks passed
 
 ## EXPLORER ERROR REVIEW

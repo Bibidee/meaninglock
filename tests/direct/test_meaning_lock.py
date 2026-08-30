@@ -85,6 +85,68 @@ def test_multimodal_evidence_uses_mocked_render_and_json_llm(direct_vm, direct_d
     assert record["confidence"] == 2  # HIGH
 
 
+def test_semantic_equivalence_accepts_same_verdict_with_different_metadata(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Equivalence is over the policy verdict, not diagnostic metadata."""
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    leader = {"outcome": 1, "impact": 0, "confidence": 2, "mask": 0}
+    validator = {"outcome": 1, "impact": 1, "confidence": 1, "mask": 1}
+    assert contract._derive_for_covenant(covenant, leader) == 1
+    assert contract._derive_for_covenant(covenant, validator) == 1
+    assert contract._derive_for_covenant(covenant, leader) == contract._derive_for_covenant(covenant, validator)
+
+
+def test_semantic_equivalence_rejects_different_final_verdicts(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    preserved = {"outcome": 1, "impact": 0, "confidence": 2, "mask": 0}
+    changed = {"outcome": 2, "impact": 2, "confidence": 2, "mask": 1}
+    assert contract._derive_for_covenant(covenant, preserved) == 1
+    assert contract._derive_for_covenant(covenant, changed) == 2
+    assert contract._derive_for_covenant(covenant, preserved) != contract._derive_for_covenant(covenant, changed)
+
+
+def test_semantic_equivalence_accepts_same_unverifiable_verdict(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    low_preserved = {"outcome": 1, "impact": 0, "confidence": 0, "mask": 0}
+    low_changed = {"outcome": 2, "impact": 2, "confidence": 0, "mask": 1}
+    assert contract._derive_for_covenant(covenant, low_preserved) == 4
+    assert contract._derive_for_covenant(covenant, low_changed) == 4
+    assert contract._derive_for_covenant(covenant, low_preserved) == contract._derive_for_covenant(covenant, low_changed)
+
+
+def test_semantic_equivalence_rejects_changed_vs_removed(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    changed = {"outcome": 2, "impact": 2, "confidence": 2, "mask": 1}
+    removed = {"outcome": 3, "impact": 3, "confidence": 2, "mask": 1}
+    assert contract._derive_for_covenant(covenant, changed) == 2
+    assert contract._derive_for_covenant(covenant, removed) == 3
+    assert contract._derive_for_covenant(covenant, changed) != contract._derive_for_covenant(covenant, removed)
+
+
+def test_semantic_equivalence_is_sensitive_to_covenant_policy(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    first = _register(contract, direct_vm, direct_alice, direct_bob)
+    second = _register(contract, direct_vm, direct_alice, direct_bob)
+    record = {"outcome": 1, "impact": 1, "confidence": 2, "mask": 1}
+    assert contract._derive_for_covenant(first, record) == 1
+    direct_vm.sender = direct_alice
+    contract.configure_evidence_policy(second, 2, 0, False, True)
+    assert contract._derive_for_covenant(second, record) == 4
+
+
+def test_malformed_record_normalizes_to_unverifiable(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    malformed = {"outcome": 999, "impact": 999, "confidence": 999, "mask": 999}
+    normalized = contract._record_or_safe_fallback(malformed)
+    assert normalized["outcome"] == 4
+    assert normalized["impact"] == 0
+    assert normalized["confidence"] == 0
+    assert normalized["mask"] == 0
+
+
 def _register(contract, vm, publisher, beneficiary, expires=2000000000):
     vm.sender = publisher
     vm.value = 100
