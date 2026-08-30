@@ -20,7 +20,7 @@ Its complete payable lifecycle proof is finalized and source-matched.
 - Challenger bond: returned/resolved (`0` remaining); publisher bond: locked (`1000000000000000000` remaining)
 - Protocol read: `[false, "1000000000000000000", 86400, 86400]`
 - Explorer source parity: confirmed against the frozen source commit and SHA-256 above.
-- CI: successful workflow run `33330919082`; Direct Mode `33 passed, 2 skipped`.
+- CI: successful workflow run `33335268486` on final HEAD; Direct Mode `35 passed, 2 skipped`.
 
 
 - Network: GenLayer Studio Network
@@ -106,7 +106,7 @@ These transactions belong to the superseded pre-hardening deployment
 - `genvm-lint validate`: passed for the historical source; 48 methods (26 view, 22 write)
 - `genvm-lint schema`: written successfully
 - `genvm-lint typecheck`: no type errors
-- Direct Mode: 33 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT lifecycle coverage)
+- Direct Mode: 35 passed, 2 skipped (including targeted semantic-verdict equivalence, baseline mismatch, and DRAFT lifecycle coverage)
 - Plain integration pytest: 1 skipped when no live `MEANINGLOCK_ADDRESS`/RPC environment is configured; canonical payable lifecycle evidence is recorded above.
 - Full release script: structural checks passed
 
