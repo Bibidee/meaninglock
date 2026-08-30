@@ -22,5 +22,15 @@ jobs:
         run: genvm-lint schema contracts/meaning_lock.py --output evidence/meaning_lock.schema.json
       - name: GenVM typecheck
         run: genvm-lint typecheck contracts/meaning_lock.py
+      - name: Seed Direct Mode GenVM cache
+        shell: bash
+        run: |
+          # genlayer-test 0.29.2 still requests the retired universal asset
+          # name.  The rc7 release publishes the same runner bundle as
+          # genvm-runners-all.tar.xz; seed the cache under the filename the
+          # loader expects so Direct Mode does not fail with HTTP 404.
+          mkdir -p "$HOME/.cache/gltest-direct"
+          curl -fsSL "https://github.com/genlayerlabs/genvm/releases/download/v0.3.0-rc7/genvm-runners-all.tar.xz" \
+            -o "$HOME/.cache/gltest-direct/genvm-universal-v0.3.0-rc7.tar.xz"
       - name: Direct Mode tests
         run: gltest tests/direct -q
