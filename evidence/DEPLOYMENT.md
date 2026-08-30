@@ -61,3 +61,4 @@ The following addresses are historical and must not be used as the submission ad
 - `0x1a8161F5f593b73536cbef75a3569ff71a2D7406` — superseded; challenge receipt rolled back as `inactive or expired`.
 - `0x120Cf583bC1f563Af0686B3aDbF8f90b85fd64A0` — superseded; verification finalized `MAJORITY_DISAGREE` / `UNVERIFIABLE`.
 - `0xc7754290690596D4e0Ba8b6E453A2cDc718fcfB2` — superseded; verification finalized `MAJORITY_DISAGREE` and remained pending.
+- `0x7b18134d65d2E271BDEBCD5A2A42B2df587CfF32` — superseded; static-content verification finalized `MAJORITY_DISAGREE` / `UNVERIFIABLE`.
