@@ -99,6 +99,17 @@ def _mock_verdict(vm, outcome):
     vm.mock_llm(r".*Classify only material covenant meaning.*", '{"outcome":"%s","impact":"MATERIAL","confidence":"HIGH","mask":"1"}' % outcome)
 
 
+def _open_adverse(contract, vm, publisher, challenger):
+    covenant = _register(contract, vm, publisher, challenger)
+    vm.sender = challenger
+    vm.value = 1
+    contract.challenge(covenant, "terms changed", "https://evidence.example", "")
+    _mock_verdict(vm, "MATERIAL_CHANGE")
+    assert contract.verify(covenant) == 2
+    vm.clear_mocks()
+    return covenant
+
+
 def test_adverse_review_clears_round_and_blocks_claim_until_appeal_ends(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
     covenant = _register(contract, direct_vm, direct_alice, direct_bob)
@@ -115,6 +126,17 @@ def test_adverse_review_clears_round_and_blocks_claim_until_appeal_ends(direct_v
     # The covenant expiry is intentionally far enough away for the appeal
     # grace period to elapse while the covenant remains live.
     assert contract.is_claimable(covenant) is True
+    contract.claim_adverse(covenant)
+    status = contract.get_status(covenant)
+    assert status[0] == 4 and status[4] == 0
+    assert contract.publisher_bond[covenant] == 0
+    assert contract.challenger_bond[covenant] == 0
+    assert contract.paid[covenant] is True
+    totals = contract.get_payout_totals(covenant)
+    assert totals[0] == 101 and totals[0] == totals[1] + totals[2] + totals[3]
+    assert contract.is_claimable(covenant) is False
+    with direct_vm.expect_revert("resolved review required"):
+        contract.claim_adverse(covenant)
 
 
 def test_unverifiable_review_requires_deadline_then_recovers(direct_vm, direct_deploy, direct_alice, direct_bob):
@@ -131,5 +153,76 @@ def test_unverifiable_review_requires_deadline_then_recovers(direct_vm, direct_d
         contract.recover_unverifiable(covenant)
     direct_vm.warp("2030-01-01T00:00:00Z")
     contract.recover_unverifiable(covenant)
+    assert contract.get_status(covenant)[0] == 4
+    assert contract.get_status(covenant)[4] == 0
+
+
+def test_appeal_preserved_restores_active_and_allows_later_challenge(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_alice
+    contract.appeal_verdict(covenant, "reconsider", "https://appeal.example", "")
+    _mock_verdict(direct_vm, "PRESERVED")
+    assert contract.verify(covenant) == 1
+    assert contract.get_status(covenant)[0] == 1
+    assert contract.get_review_type(covenant) == 0
+    assert contract.appeal_deadline[covenant] == 0
+    assert contract.pre_appeal_verdict[covenant] == 0
+    assert contract.publisher_bond[covenant] == 100
+    direct_vm.clear_mocks()
+    direct_vm.sender = direct_bob
+    direct_vm.value = 1
+    contract.challenge(covenant, "second review", "https://evidence.example", "")
+    assert contract.get_review_type(covenant) == 1
+
+
+def test_appeal_unverifiable_restores_adverse_finality(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_alice
+    contract.appeal_verdict(covenant, "uncertain appeal", "https://appeal.example", "")
+    _mock_verdict(direct_vm, "UNVERIFIABLE")
+    assert contract.verify(covenant) == 2
+    assert contract.get_status(covenant)[0] == 3
+    assert contract.get_review_type(covenant) == 0
+    assert contract.recovery_deadline[covenant] == 0
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    assert contract.is_claimable(covenant) is True
+
+
+def test_appeal_timeout_restores_prior_adverse_verdict(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.sender = direct_alice
+    contract.appeal_verdict(covenant, "timeout test", "https://appeal.example", "")
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    contract.recover_timed_out_appeal(covenant)
+    assert contract.get_status(covenant)[1] == 2
+    assert contract.get_review_type(covenant) == 0
+    assert contract.pre_appeal_verdict[covenant] == 0
+    assert contract.recovery_deadline[covenant] == 0
+
+
+def test_repeated_preserved_rounds_refund_each_challenger(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _register(contract, direct_vm, direct_alice, direct_bob)
+    for label in ("A", "B", "C"):
+        direct_vm.sender = direct_bob
+        direct_vm.value = 1
+        contract.challenge(covenant, "preserved " + label, "https://evidence.example", "")
+        _mock_verdict(direct_vm, "PRESERVED")
+        assert contract.verify(covenant) == 1
+        assert contract.get_status(covenant)[0] == 1
+        assert contract.challenger_bond[covenant] == 0
+        assert contract.escrow[covenant] == contract.publisher_bond[covenant] + contract.challenger_bond[covenant]
+        direct_vm.clear_mocks()
+
+
+def test_audit_cap_does_not_block_adverse_settlement(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = direct_deploy('contracts/meaning_lock.py', 1, 60, 120)
+    covenant = _open_adverse(contract, direct_vm, direct_alice, direct_bob)
+    contract.audit_count[covenant] = 256
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    contract.claim_adverse(covenant)
     assert contract.get_status(covenant)[0] == 4
     assert contract.get_status(covenant)[4] == 0

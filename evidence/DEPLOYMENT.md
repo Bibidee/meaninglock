@@ -116,6 +116,20 @@ The intermediate deployments `0x637DFc653a9508984b933ebF9CAeE0Ce51240Be8`, `0x94
 - Explorer/source parity: confirmed byte-for-byte after transport line-ending normalization.
 - Source length: 1,319 physical lines.
 
+### Final canonical payable lifecycle proof
+
+No payable transaction was fabricated for this address. The installed CLI does
+not expose a GEN call-value parameter, and no wallet/API signer with payable
+support was available in this environment. The canonical address has therefore
+only the verified constructor, schema, protocol, and source-parity evidence
+above; payable registration/challenge evidence from superseded addresses is not
+reused here.
+
+The executable Direct Mode suite independently proves registration, challenge,
+adverse settlement, UNVERIFIABLE recovery, appeal finality/timeout, repeated
+preserved rounds, multimodal evidence, escrow conservation, and audit-cap
+liveness. Latest result: `15 passed, 3 skipped`.
+
 This is the sole canonical submission address. It supersedes
 `0xFe25f083c550268bd7e164EECe218F73f66b3E18` because the terminal-state
 closure source changed.
